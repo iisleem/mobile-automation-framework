@@ -1,0 +1,8 @@
+Appium-Python-Client>=5.0.0,<6.0.0
+selenium>=4.27.0,<5.0.0
+pytest==8.3.4
+pytest-xdist==3.6.1
+pytest-rerunfailures==15.0
+allure-pytest==2.13.5
+PyYAML==6.0.2
+requests>=2.32.0,<3.0.0

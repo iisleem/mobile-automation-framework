@@ -1,0 +1,11 @@
+qa:
+  api_base_url: "https://httpbin.org"
+  mobile_web_url: "https://appium.io"
+
+staging:
+  api_base_url: "https://httpbin.org"
+  mobile_web_url: "https://appium.io"
+
+prod:
+  api_base_url: "https://httpbin.org"
+  mobile_web_url: "https://appium.io"

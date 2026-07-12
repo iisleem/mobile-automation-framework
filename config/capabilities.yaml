@@ -1,0 +1,46 @@
+profiles:
+  android_the_app:
+    platformName: Android
+    appium:automationName: UiAutomator2
+    appium:deviceName: "Android Emulator"
+    appium:app: "apps/TheApp.apk"
+    appium:autoGrantPermissions: true
+    appium:newCommandTimeout: 120
+    appium:noReset: false
+
+  ios_the_app:
+    platformName: iOS
+    appium:automationName: XCUITest
+    appium:deviceName: "iPhone 15"
+    appium:platformVersion: "${IOS_PLATFORM_VERSION:-}"
+    appium:language: en
+    appium:locale: en_US
+    appium:app: "apps/TheApp.app.zip"
+    appium:connectHardwareKeyboard: false
+    appium:forceSimulatorSoftwareKeyboardPresence: true
+    appium:maxTypingFrequency: 30
+    appium:newCommandTimeout: 120
+    appium:noReset: false
+
+  android_mobile_web:
+    platformName: Android
+    browserName: Chrome
+    appium:automationName: UiAutomator2
+    appium:deviceName: "Android Emulator"
+    appium:chromedriverAutodownload: true
+    appium:newCommandTimeout: 120
+    appium:noReset: true
+
+  ios_mobile_web:
+    platformName: iOS
+    browserName: Safari
+    appium:automationName: XCUITest
+    appium:deviceName: "iPhone 15"
+    appium:platformVersion: "${IOS_PLATFORM_VERSION:-}"
+    appium:language: en
+    appium:locale: en_US
+    appium:connectHardwareKeyboard: false
+    appium:forceSimulatorSoftwareKeyboardPresence: true
+    appium:maxTypingFrequency: 30
+    appium:newCommandTimeout: 120
+    appium:noReset: true

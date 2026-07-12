@@ -1,0 +1,44 @@
+timeouts:
+  default_timeout_ms: 10000
+  short_timeout_ms: 2500
+  command_timeout_seconds: 120
+  polling_interval_seconds: 0.5
+
+appium:
+  server_url: "http://127.0.0.1:4723"
+  auto_start: false
+  startup_timeout_seconds: 30
+
+execution:
+  default_profile: android_the_app
+  profiles:
+    - android_the_app
+    - ios_the_app
+    - android_mobile_web
+    - ios_mobile_web
+  profile_workers: 1
+
+artifacts:
+  screenshots_dir: screenshots
+  source_dumps_dir: source_dumps
+  recordings_dir: recordings
+  logs_dir: logs
+  allure_results_dir: reports/allure-results
+
+recording:
+  enabled: false
+  video_type: mp4
+
+retries:
+  default: 1
+  delay_seconds: 1
+  action_default: 3
+  action_delay_seconds: 0.3
+
+self_healing:
+  enabled: true
+  timeout_ms: 1500
+
+sample_apps:
+  the_app_android_url: "https://github.com/appium-pro/TheApp/releases/download/v1.12.0/TheApp.apk"
+  the_app_ios_url: "https://github.com/appium-pro/TheApp/releases/download/v1.12.0/TheApp.app.zip"

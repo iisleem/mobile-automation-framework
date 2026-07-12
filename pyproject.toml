@@ -1,0 +1,15 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = [
+    ".venv",
+    "apps",
+    "reports",
+    "screenshots",
+    "source_dumps",
+    "recordings",
+    "logs",
+]
+
+[tool.ruff.lint]
+select = ["E9", "F"]

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mobile Framework Helpers Catalog</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 32px; color: #1f2937; }
+    h1 { margin-bottom: 8px; }
+    input { width: 100%; max-width: 520px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin: 16px 0 24px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #e5e7eb; padding: 10px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; }
+    code { background: #eef2ff; padding: 2px 4px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Mobile Framework Helpers Catalog</h1>
+  <p>Search by helper, category, tag, or description.</p>
+  <input id="search" placeholder="Search helpers..." autofocus>
+  <table>
+    <thead>
+      <tr><th>Helper</th><th>Category</th><th>Tags</th><th>Description</th></tr>
+    </thead>
+    <tbody id="rows">
+      <tr><td><code>GestureHelper</code></td><td>Gestures</td><td>swipe, scroll, touch</td><td>Cross-platform gesture wrappers.</td></tr>
+      <tr><td><code>ContextHelper</code></td><td>Contexts</td><td>native, webview, hybrid, mobile web</td><td>Switches between native, in-app webview, and mobile browser contexts.</td></tr>
+      <tr><td><code>DeviceHelper</code></td><td>Device</td><td>orientation, lock, battery</td><td>Controls device state and reads device info.</td></tr>
+      <tr><td><code>AppHelper</code></td><td>Apps</td><td>install, activate, terminate</td><td>Controls app lifecycle and installation.</td></tr>
+      <tr><td><code>PermissionHelper</code></td><td>Permissions</td><td>alerts, android, runtime</td><td>Handles runtime permissions and alerts.</td></tr>
+      <tr><td><code>DeepLinkHelper</code></td><td>Deep Links</td><td>routing, universal links</td><td>Opens app deep links or universal links.</td></tr>
+      <tr><td><code>ClipboardHelper</code></td><td>Clipboard</td><td>copy, paste, text</td><td>Reads and writes clipboard text.</td></tr>
+      <tr><td><code>assert_no_unlabeled_controls</code></td><td>Accessibility</td><td>a11y, labels</td><td>Finds interactive controls without labels.</td></tr>
+      <tr><td><code>capture_screen_screenshot</code></td><td>Visual</td><td>screenshot, baseline</td><td>Captures screenshots and supports baseline comparison.</td></tr>
+      <tr><td><code>wait_until</code></td><td>Wait</td><td>polling, retry</td><td>Polls non-UI asynchronous conditions.</td></tr>
+      <tr><td><code>extract_otp</code></td><td>Text</td><td>otp, regex</td><td>Extracts OTP values from text.</td></tr>
+      <tr><td><code>random_email</code></td><td>Data</td><td>test data, unique</td><td>Generates unique readable test data.</td></tr>
+      <tr><td><code>ApiClient</code></td><td>API</td><td>setup, cleanup</td><td>Lightweight API client for mobile setup and cleanup.</td></tr>
+      <tr><td><code>SoftAssert</code></td><td>Assertions</td><td>grouped failures</td><td>Collects multiple assertion failures.</td></tr>
+      <tr><td><code>attach_json</code></td><td>Allure Debug</td><td>reporting, attachments</td><td>Adds debug context to reports.</td></tr>
+      <tr><td><code>BaseScreen.tap</code></td><td>Screen Actions</td><td>retry, verification</td><td>Retries failed taps and can verify expected post-tap state.</td></tr>
+      <tr><td><code>BaseScreen.type_text</code></td><td>Screen Actions</td><td>retry, verification, input</td><td>Types text and verifies the value changed before continuing.</td></tr>
+      <tr><td><code>BaseScreen.type_text_with_keyboard</code></td><td>Screen Actions</td><td>ios, keyboard, secure fields</td><td>Types through the active iOS keyboard when normal send_keys is not enough.</td></tr>
+    </tbody>
+  </table>
+  <script>
+    const search = document.querySelector("#search");
+    const rows = Array.from(document.querySelectorAll("#rows tr"));
+    search.addEventListener("input", () => {
+      const query = search.value.toLowerCase();
+      rows.forEach((row) => {
+        row.style.display = row.innerText.toLowerCase().includes(query) ? "" : "none";
+      });
+    });
+  </script>
+</body>
+</html>
