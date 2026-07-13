@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Improved iOS hybrid webview discovery with metadata-based `ContextHelper` matching.
+- Added iOS hybrid demo process bundle ids to the sample profile without changing native profiles.
+
 ## v0.2.0
 
 - Added real hybrid sample apps from source: Android WebView and iOS WKWebView.

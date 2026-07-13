@@ -45,7 +45,9 @@ profiles:
     appium:fullContextList: true
     appium:additionalWebviewBundleIds:
       - "dev.mobileframework.hybriddemo"
-    appium:webviewConnectTimeout: 10000
+      - "process-HybridDemo"
+      - "process-com.apple.WebKit.WebContent"
+    appium:webviewConnectTimeout: 20000
     appium:connectHardwareKeyboard: false
     appium:forceSimulatorSoftwareKeyboardPresence: true
     appium:maxTypingFrequency: 30

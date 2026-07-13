@@ -114,7 +114,11 @@ Things to check:
 - Use full Xcode through `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 - Keep `appium:includeSafariInWebviews`, `appium:fullContextList`, and
   `appium:additionalWebviewBundleIds` in the `ios_hybrid_demo` profile.
+- Include the process bundle id Appium reports in server logs. For the bundled demo that is
+  `process-HybridDemo`; for product apps it may be `process-YourAppName` or a WebKit process.
 - Confirm the app's `WKWebView` sets `isInspectable = true`.
+- Prefer matching with `ContextHelper.switch_to_webview(title=..., url_contains=..., bundle_id=...)`
+  for iOS hybrid apps where Appium exposes multiple webviews.
 - Re-run on the simulator/Xcode version used by your team or on a device farm that supports iOS
   webview inspection.
 

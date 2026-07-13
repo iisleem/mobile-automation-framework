@@ -17,16 +17,21 @@ class _SwitchTo:
 
 
 class _Driver:
-    def __init__(self, contexts: list[str]) -> None:
+    def __init__(self, contexts: list[object], capabilities: dict | None = None) -> None:
         self.contexts = contexts
         self.current_context = contexts[0]
+        self.capabilities = capabilities or {}
         self.switch_to = _SwitchTo()
+
+    def execute_script(self, script: str, args: dict | None = None):
+        raise NotImplementedError(script)
 
 
 class _DelayedContextDriver:
     def __init__(self) -> None:
         self.calls = 0
         self.current_context = "NATIVE_APP"
+        self.capabilities = {}
         self.switch_to = _SwitchTo()
 
     @property
@@ -78,3 +83,35 @@ def test_context_helper_supports_full_context_list_dictionaries():
 
     assert context == "WEBVIEW_dev.mobileframework.hybriddemo"
     assert driver.switch_to.selected == "WEBVIEW_dev.mobileframework.hybriddemo"
+
+
+def test_context_helper_uses_ios_mobile_get_contexts_metadata():
+    class IosDriver(_Driver):
+        def __init__(self) -> None:
+            super().__init__(["NATIVE_APP"], capabilities={"platformName": "iOS"})
+
+        def execute_script(self, script: str, args: dict | None = None):
+            assert script == "mobile: getContexts"
+            assert args == {"waitForWebviewMs": 0}
+            return [
+                {"id": "NATIVE_APP"},
+                {
+                    "id": "WEBVIEW_17506.1",
+                    "title": "Hybrid Demo",
+                    "url": "https://hybrid.demo.local/",
+                    "bundleId": "process-HybridDemo",
+                },
+            ]
+
+    driver = IosDriver()
+
+    context = ContextHelper(driver).switch_to_webview(
+        title="Hybrid Demo",
+        url_contains="hybrid.demo.local",
+        bundle_id="process-HybridDemo",
+        timeout_seconds=1,
+        poll_interval_seconds=0,
+    )
+
+    assert context == "WEBVIEW_17506.1"
+    assert driver.switch_to.selected == "WEBVIEW_17506.1"

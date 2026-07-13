@@ -211,11 +211,13 @@ python framework.py run --hybrid-example --profile ios_hybrid_demo --device-name
 ```
 
 The test starts in native context, verifies the webview, switches to a webview context with
-`ContextHelper`, interacts with CSS selectors, and switches back to native.
+`ContextHelper`, interacts with CSS selectors, and switches back to native. Native profiles do not
+enable webview discovery capabilities; hybrid profiles do.
 
-On iOS, the WKWebView app is built and launched like a real hybrid app. Some local simulator/Appium
-combinations expose only `NATIVE_APP` even when the WKWebView is visible; in that case the example
-skips with a clear message instead of failing later with a misleading selector error.
+On iOS, `ContextHelper` can select webview contexts by metadata such as title, URL, and bundle id
+when Appium exposes a full context list. If a simulator/Appium/Web Inspector combination still
+exposes only `NATIVE_APP`, the example skips with a clear setup message instead of failing later
+with a misleading selector error.
 
 ## Unified CLI
 
@@ -354,7 +356,7 @@ from utils.helpers.contexts import ContextHelper
 
 def test_hybrid_checkout(mobile_driver):
     contexts = ContextHelper(mobile_driver)
-    contexts.switch_to_webview()
+    contexts.switch_to_webview(title="Checkout", url_contains="/checkout", bundle_id="process-Checkout")
     assert "WEBVIEW" in contexts.current_context()
     contexts.switch_to_native()
 ```
@@ -437,9 +439,10 @@ tests while reusing the framework structure.
 
 - Self-healing means engineer-defined fallback locators. AI-based auto-healing is intentionally out
   of scope for this release.
-- iOS WKWebView context visibility depends on the local Web Inspector/Appium/Xcode environment. The
-  iOS hybrid example verifies the native WKWebView and skips clearly if Appium exposes no webview
-  context.
+- iOS WKWebView context visibility depends on the local Web Inspector/Appium/Xcode environment.
+  Hybrid profiles include webview discovery capabilities, and `ContextHelper` can match by
+  `title`, `url_contains`, and `bundle_id`; the iOS hybrid example still skips clearly if Appium
+  exposes no switchable webview context.
 - Sample app binaries and generated reports are gitignored. Download sample apps locally with
   `python scripts/download_sample_apps.py --all` or build hybrid fixtures with
   `python scripts/build_hybrid_sample_apps.py --all`.

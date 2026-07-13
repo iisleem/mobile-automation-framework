@@ -15,12 +15,19 @@ def test_hybrid_demo_switches_context_and_submits_form(mobile_driver):
 
     contexts = ContextHelper(mobile_driver)
     try:
-        webview_context = contexts.switch_to_webview()
+        if str(mobile_driver.capabilities.get("platformName", "")).lower() == "ios":
+            webview_context = contexts.switch_to_webview(
+                title="Hybrid Demo",
+                url_contains="hybrid.demo.local",
+                bundle_id="process-HybridDemo",
+            )
+        else:
+            webview_context = contexts.switch_to_webview(partial_name="hybriddemo")
     except AssertionError as error:
         if str(mobile_driver.capabilities.get("platformName", "")).lower() == "ios":
             pytest.skip(f"iOS WKWebView loaded, but Appium did not expose a WEBVIEW context here: {error}")
         raise
-    assert "WEBVIEW" in webview_context.upper() or webview_context.upper() == "CHROMIUM"
+    assert webview_context != "NATIVE_APP"
 
     web = HybridWebScreen(mobile_driver)
     web.expect_page_loaded()

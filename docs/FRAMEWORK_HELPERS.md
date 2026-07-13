@@ -11,7 +11,7 @@ so tests stay readable without hiding product behavior.
 | `GestureHelper.long_press`, `tap_coordinates` | Gestures | long press, coordinates | Performs coordinate and element-level gestures. |
 | `ContextHelper.contexts` | Contexts | native, webview, hybrid, mobile web | Lists available native, in-app webview, and mobile browser contexts. |
 | `ContextHelper.switch_to_native` | Contexts | native | Switches to `NATIVE_APP`. |
-| `ContextHelper.switch_to_webview` | Contexts | hybrid, webview | Switches to a matching in-app webview context. |
+| `ContextHelper.switch_to_webview` | Contexts | hybrid, webview | Switches to a matching in-app webview context by name, title, URL, or bundle id. |
 | `DeviceHelper.rotate_portrait`, `rotate_landscape` | Device | orientation | Changes device orientation. |
 | `DeviceHelper.background_app`, `lock`, `unlock` | Device | lifecycle | Sends the app/device to background, locks, or unlocks. |
 | `DeviceHelper.battery_info` | Device | battery | Reads mobile battery info through Appium extensions. |
@@ -56,7 +56,7 @@ def test_scrolls_to_bottom(mobile_driver):
 
 ## Contexts
 
-Use this for hybrid apps that expose an in-app webview. It can also switch to mobile browser contexts when Appium exposes them as `CHROMIUM` or `WEBVIEW_*`.
+Use this for hybrid apps that expose an in-app webview. It can also switch to mobile browser contexts when Appium exposes them as `CHROMIUM` or `WEBVIEW_*`. On iOS, it can use Appium's full context metadata to match by title, URL, or bundle id.
 
 ```python
 from utils.helpers.contexts import ContextHelper
@@ -64,7 +64,7 @@ from utils.helpers.contexts import ContextHelper
 
 def test_webview(mobile_driver):
     contexts = ContextHelper(mobile_driver)
-    contexts.switch_to_webview()
+    contexts.switch_to_webview(title="Checkout", url_contains="/checkout")
     assert "WEBVIEW" in contexts.current_context()
     contexts.switch_to_native()
 ```

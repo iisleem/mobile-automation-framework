@@ -51,7 +51,7 @@ def test_hybrid_demo(mobile_driver):
     native.expect_loaded()
 
     contexts = ContextHelper(mobile_driver)
-    contexts.switch_to_webview()
+    contexts.switch_to_webview(title="Hybrid Demo", url_contains="hybrid.demo.local")
 
     web = HybridWebScreen(mobile_driver)
     web.submit_name("Hybrid QA")
@@ -61,9 +61,10 @@ def test_hybrid_demo(mobile_driver):
     native.expect_loaded()
 ```
 
-Android normally exposes a `WEBVIEW_*` or `CHROMIUM` context for this sample. iOS WKWebView context
-visibility can depend on local Web Inspector/Appium/Xcode behavior; the example skips with a clear
-message when the native WKWebView is visible but no webview context is exposed.
+Android normally exposes a `WEBVIEW_*` or `CHROMIUM` context for this sample. iOS hybrid profiles
+enable full webview discovery and the helper can match by context metadata. If the local Web
+Inspector/Appium/Xcode combination still exposes only `NATIVE_APP`, the example skips with a clear
+message.
 
 ## Mobile Web
 
