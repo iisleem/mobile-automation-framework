@@ -20,7 +20,7 @@ mobile automation problem.
 | Self-healing locators | Supported | Engineer-defined fallback locators through `locator_with_fallbacks`; no runtime selector invention. |
 | Android native | Supported | `android_the_app` profile and runnable TheApp example. |
 | iOS native | Supported | `ios_the_app` profile and runnable TheApp example. |
-| Hybrid apps | Supported | `ContextHelper` switches between `NATIVE_APP` and webview contexts. |
+| Hybrid apps | Supported | `ContextHelper` switches between `NATIVE_APP` and webview contexts; Android WebView and iOS WKWebView samples are included from source. |
 | Mobile web | Supported | Appium Chrome/Safari profiles and a runnable mobile web smoke example. |
 | Profile matrix | Supported | `scripts/run_device_matrix.py` runs one pytest suite per capability profile and builds a dashboard. |
 | Helper catalog | Supported | `docs/FRAMEWORK_HELPERS.md` and `docs/helpers_catalog.html` document reusable helpers. |

@@ -1,0 +1,140 @@
+name: Mobile Device Examples
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Device suite to run
+        required: true
+        default: android-native
+        type: choice
+        options:
+          - android-native
+          - ios-native
+          - android-mobile-web
+          - ios-mobile-web
+          - android-hybrid
+          - ios-hybrid
+          - matrix
+      runner_labels:
+        description: JSON array of self-hosted runner labels
+        required: true
+        default: '["self-hosted","mobile"]'
+      appium_server:
+        description: Appium server URL
+        required: false
+        default: "http://127.0.0.1:4723"
+      start_appium:
+        description: Start local Appium before running
+        required: true
+        default: false
+        type: boolean
+      device_name:
+        description: Optional Appium device name override
+        required: false
+      platform_version:
+        description: Optional platform version override
+        required: false
+      udid:
+        description: Optional device/simulator UDID override
+        required: false
+      developer_dir:
+        description: Xcode developer dir for iOS runs
+        required: false
+        default: "/Applications/Xcode.app/Contents/Developer"
+
+jobs:
+  device-examples:
+    name: ${{ inputs.suite }}
+    runs-on: ${{ fromJSON(inputs.runner_labels) }}
+    timeout-minutes: 75
+    env:
+      DEVELOPER_DIR: ${{ inputs.developer_dir }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Build hybrid sample apps
+        if: contains(inputs.suite, 'hybrid')
+        run: |
+          if [[ "${{ inputs.suite }}" == "android-hybrid" ]]; then
+            python scripts/build_hybrid_sample_apps.py --android
+          else
+            python scripts/build_hybrid_sample_apps.py --ios
+          fi
+
+      - name: Start Appium
+        if: inputs.start_appium
+        run: |
+          nohup appium --base-path / --address 127.0.0.1 --port 4723 --allow-insecure '*:chromedriver_autodownload' > logs/appium.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS "${{ inputs.appium_server }}/status" >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat logs/appium.log || true
+          exit 1
+
+      - name: Doctor
+        run: python framework.py doctor
+
+      - name: Run selected device suite
+        shell: bash
+        run: |
+          common=(--no-open-report --appium-server "${{ inputs.appium_server }}")
+          if [[ -n "${{ inputs.device_name }}" ]]; then common+=(--device-name "${{ inputs.device_name }}"); fi
+          if [[ -n "${{ inputs.platform_version }}" ]]; then common+=(--platform-version "${{ inputs.platform_version }}"); fi
+          if [[ -n "${{ inputs.udid }}" ]]; then common+=(--udid "${{ inputs.udid }}"); fi
+
+          case "${{ inputs.suite }}" in
+            android-native)
+              python framework.py run --android-example --profile android_the_app "${common[@]}"
+              ;;
+            ios-native)
+              python framework.py run --ios-example --profile ios_the_app "${common[@]}"
+              ;;
+            android-mobile-web)
+              python framework.py run --mobile-web --profile android_mobile_web "${common[@]}"
+              ;;
+            ios-mobile-web)
+              python framework.py run --mobile-web --profile ios_mobile_web "${common[@]}"
+              ;;
+            android-hybrid)
+              python framework.py run --hybrid-example --profile android_hybrid_demo "${common[@]}"
+              ;;
+            ios-hybrid)
+              python framework.py run --hybrid-example --profile ios_hybrid_demo "${common[@]}"
+              ;;
+            matrix)
+              python framework.py run --matrix "${common[@]}"
+              ;;
+            *)
+              echo "Unsupported suite: ${{ inputs.suite }}"
+              exit 1
+              ;;
+          esac
+
+      - name: Upload device artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mobile-device-artifacts-${{ inputs.suite }}
+          path: |
+            reports
+            screenshots
+            source_dumps
+            recordings
+            logs
+          if-no-files-found: warn

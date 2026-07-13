@@ -34,10 +34,13 @@ test setup, cleanup, and assertions.
 - Mobile helpers for gestures, contexts, app lifecycle, permissions, deep links, clipboard, device state, accessibility, visual checks, polling, API setup, files, text extraction, test data, and soft assertions
 - Runnable Android native example using TheApp
 - Runnable iOS native example using TheApp
+- Runnable hybrid example using local Android WebView and iOS WKWebView sample apps
 - Runnable mobile web smoke example for Android Chrome or iOS Safari Appium profiles
 - Helper unit tests that run without a connected device
 - Feature parity notes that explain supported mobile features and intentionally excluded web-only utilities
 - GitHub Actions validation for helper tests, static checks, and report artifacts
+- Manual self-hosted/device-farm workflow for real Android and iOS device examples
+- Starter project template for product-specific mobile suites
 
 ## Project Structure
 
@@ -57,6 +60,7 @@ mobile-automation-framework/
 ├── tests/
 │   ├── examples/android/         # Runnable Android native example
 │   ├── examples/ios/             # Runnable iOS native example
+│   ├── examples/hybrid/          # Runnable native-to-webview hybrid example
 │   ├── examples/mobile_web/      # Runnable Appium mobile web smoke example
 │   └── helpers/                  # Fast helper/unit tests
 ├── utils/
@@ -67,11 +71,19 @@ mobile-automation-framework/
 │   └── artifact_helper.py        # Failure screenshots, logs, source dumps, recordings
 ├── scripts/
 │   ├── download_sample_apps.py   # Downloads TheApp Android/iOS fixtures
+│   ├── build_hybrid_sample_apps.py # Builds local hybrid demo app fixtures
 │   ├── run_device_matrix.py      # Runs one pytest suite per profile
 │   └── generate_allure_report.py # Manual report generation helper
+├── sample_apps/
+│   └── hybrid/                   # Android WebView and iOS WKWebView demo app source
+├── templates/
+│   └── starter_project/          # Copyable product suite starter
 ├── docs/
 │   ├── FRAMEWORK_HELPERS.md
 │   ├── FEATURE_PARITY.md
+│   ├── EXAMPLES.md
+│   ├── DEVICE_CI.md
+│   ├── SCREENSHOTS.md
 │   ├── TROUBLESHOOTING.md
 │   └── helpers_catalog.html
 ├── conftest.py                   # Pytest hooks and fixtures
@@ -118,13 +130,19 @@ You can also download both fixtures manually:
 python scripts/download_sample_apps.py --all
 ```
 
+Build the local hybrid demo apps when you want to run the hybrid examples:
+
+```bash
+python scripts/build_hybrid_sample_apps.py --all
+```
+
 ## Local Validation
 
 Use these commands before opening a PR:
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
-python -m compileall -q framework.py conftest.py screens flows utils scripts tests
+python -m compileall -q framework.py conftest.py screens flows utils scripts tests templates
 ruff check .
 python framework.py run --helpers --no-open-report --no-generate-report
 ```
@@ -175,6 +193,29 @@ python framework.py run --mobile-web --profile ios_mobile_web --device-name "iPh
 
 For real site tests, the configured URL fixture lives in `config/environments.yaml` as
 `mobile_web_url`.
+
+## Run The Hybrid Example
+
+The hybrid example uses real local sample apps: an Android `WebView` app and an iOS `WKWebView`
+simulator app. Build the fixtures first:
+
+```bash
+python scripts/build_hybrid_sample_apps.py --all
+```
+
+Then run Android or iOS:
+
+```bash
+python framework.py run --hybrid-example --profile android_hybrid_demo
+python framework.py run --hybrid-example --profile ios_hybrid_demo --device-name "iPhone 15"
+```
+
+The test starts in native context, verifies the webview, switches to a webview context with
+`ContextHelper`, interacts with CSS selectors, and switches back to native.
+
+On iOS, the WKWebView app is built and launched like a real hybrid app. Some local simulator/Appium
+combinations expose only `NATIVE_APP` even when the WKWebView is visible; in that case the example
+skips with a clear message instead of failing later with a misleading selector error.
 
 ## Unified CLI
 
@@ -235,6 +276,9 @@ python framework.py helpers --guide
 ```
 
 For the web-to-mobile concept comparison, see `docs/FEATURE_PARITY.md`.
+For more examples, see `docs/EXAMPLES.md`.
+For CI with real devices, see `docs/DEVICE_CI.md`.
+For documentation screenshots, see `docs/SCREENSHOTS.md`.
 For setup and device issues, see `docs/TROUBLESHOOTING.md`.
 
 ## Capability Profiles
@@ -254,6 +298,16 @@ profiles:
     appium:automationName: XCUITest
     appium:deviceName: "iPhone 15"
     appium:app: "apps/TheApp.app.zip"
+
+  android_hybrid_demo:
+    platformName: Android
+    appium:automationName: UiAutomator2
+    appium:app: "apps/HybridDemo.apk"
+
+  ios_hybrid_demo:
+    platformName: iOS
+    appium:automationName: XCUITest
+    appium:app: "apps/HybridDemo.app.zip"
 
   android_mobile_web:
     platformName: Android
@@ -370,16 +424,25 @@ reports/artifacts.
 
 Real Android and iOS device tests are kept out of the default hosted CI because they need Appium,
 emulator/simulator setup, Xcode for iOS, and device-specific timing. Run them locally or move them to
-a self-hosted runner when the device lab is ready.
+a self-hosted runner or device farm when the device lab is ready. The manual workflow
+`.github/workflows/device-examples.yml` is included for that path.
+
+## Starter Template
+
+This repository is marked as a GitHub template repository. It also includes a copyable starter under
+`templates/starter_project/` for teams that want to keep only product-specific screens, flows, and
+tests while reusing the framework structure.
 
 ## Known Limits
 
-- The bundled examples cover native and mobile web. Hybrid support is implemented through
-  `ContextHelper`, but this repo does not bundle a separate hybrid sample app.
 - Self-healing means engineer-defined fallback locators. AI-based auto-healing is intentionally out
   of scope for this release.
+- iOS WKWebView context visibility depends on the local Web Inspector/Appium/Xcode environment. The
+  iOS hybrid example verifies the native WKWebView and skips clearly if Appium exposes no webview
+  context.
 - Sample app binaries and generated reports are gitignored. Download sample apps locally with
-  `python scripts/download_sample_apps.py --all`.
+  `python scripts/download_sample_apps.py --all` or build hybrid fixtures with
+  `python scripts/build_hybrid_sample_apps.py --all`.
 
 ## References
 

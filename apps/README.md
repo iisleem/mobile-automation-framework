@@ -9,6 +9,12 @@ You can also download both fixtures manually:
 python scripts/download_sample_apps.py --all
 ```
 
+The hybrid examples build local sample apps from source into this folder:
+
+```bash
+python scripts/build_hybrid_sample_apps.py --all
+```
+
 You can still add your own `.apk`, `.app`, `.app.zip`, or `.ipa` here and run with:
 
 ```bash

@@ -23,6 +23,20 @@ class _Driver:
         self.switch_to = _SwitchTo()
 
 
+class _DelayedContextDriver:
+    def __init__(self) -> None:
+        self.calls = 0
+        self.current_context = "NATIVE_APP"
+        self.switch_to = _SwitchTo()
+
+    @property
+    def contexts(self) -> list[str]:
+        self.calls += 1
+        if self.calls == 1:
+            return ["NATIVE_APP"]
+        return ["NATIVE_APP", "WEBVIEW_delayed"]
+
+
 def test_context_helper_switches_to_native():
     driver = _Driver(["WEBVIEW_com.example", "NATIVE_APP"])
 
@@ -46,3 +60,21 @@ def test_context_helper_supports_android_chromium_context():
     context = ContextHelper(driver).switch_to_webview()
 
     assert context == "CHROMIUM"
+
+
+def test_context_helper_waits_for_delayed_webview_context():
+    driver = _DelayedContextDriver()
+
+    context = ContextHelper(driver).switch_to_webview(timeout_seconds=1, poll_interval_seconds=0)
+
+    assert context == "WEBVIEW_delayed"
+    assert driver.switch_to.selected == "WEBVIEW_delayed"
+
+
+def test_context_helper_supports_full_context_list_dictionaries():
+    driver = _Driver([{"id": "NATIVE_APP"}, {"id": "WEBVIEW_dev.mobileframework.hybriddemo"}])
+
+    context = ContextHelper(driver).switch_to_webview("hybriddemo")
+
+    assert context == "WEBVIEW_dev.mobileframework.hybriddemo"
+    assert driver.switch_to.selected == "WEBVIEW_dev.mobileframework.hybriddemo"

@@ -4,6 +4,7 @@ line-length = 120
 extend-exclude = [
     ".venv",
     "apps",
+    "build",
     "reports",
     "screenshots",
     "source_dumps",

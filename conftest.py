@@ -197,8 +197,7 @@ def _assert_app_path_ready(capabilities: dict, framework_config: dict) -> None:
     if _download_known_sample_app(path, framework_config):
         return
     pytest.fail(
-        f"App file does not exist: {app_path}. Run `python scripts/download_sample_apps.py --all` "
-        "or override with --app."
+        f"App file does not exist: {app_path}. {_missing_app_hint(path)}"
     )
 
 
@@ -219,6 +218,12 @@ def _download_known_sample_app(path: Path, framework_config: dict) -> bool:
     except Exception as error:
         LOGGER.warning("Could not download sample app %s: %s", url, error)
         return False
+
+
+def _missing_app_hint(path: Path) -> str:
+    if path.name.startswith("HybridDemo"):
+        return "Run `python scripts/build_hybrid_sample_apps.py --all` or override with --app."
+    return "Run `python scripts/download_sample_apps.py --all` or override with --app."
 
 
 def _start_recording_if_enabled(driver, framework_config: dict) -> bool:

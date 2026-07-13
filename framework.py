@@ -91,6 +91,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--helpers", action="store_true", help="Run helper unit tests.")
     run_parser.add_argument("--android-example", action="store_true", help="Run the Android native example.")
     run_parser.add_argument("--ios-example", action="store_true", help="Run the iOS native example.")
+    run_parser.add_argument("--hybrid-example", action="store_true", help="Run the hybrid demo app example.")
     run_parser.add_argument("--reruns", help="Retry failed tests.")
     run_parser.add_argument("--reruns-delay", help="Delay between retries.")
     run_parser.add_argument("--no-open-report", action="store_true", help="Do not open generated reports.")
@@ -142,6 +143,8 @@ def _run_tests(args: argparse.Namespace, extra_pytest_args: list[str]) -> int:
         command.append("tests/examples/android")
     if args.ios_example:
         command.append("tests/examples/ios")
+    if args.hybrid_example:
+        command.append("tests/examples/hybrid")
     if args.helpers:
         command.append("tests/helpers")
 
@@ -198,7 +201,7 @@ def _resolve_marker_expression(args: argparse.Namespace) -> str | None:
             "android": args.android or args.android_example,
             "ios": args.ios or args.ios_example,
             "native": args.native or args.android_example,
-            "hybrid": args.hybrid,
+            "hybrid": args.hybrid or args.hybrid_example,
             "mobile_web": args.mobile_web,
             "helpers": args.helpers,
         }.items()
@@ -220,6 +223,8 @@ def _resolve_profiles(args: argparse.Namespace) -> list[str]:
         return [args.profile]
     if args.matrix:
         return settings.get("execution", {}).get("profiles", [])
+    if getattr(args, "hybrid_example", False):
+        return ["android_hybrid_demo"]
     return [settings["execution"]["default_profile"]]
 
 

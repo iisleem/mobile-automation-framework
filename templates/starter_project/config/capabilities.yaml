@@ -1,0 +1,16 @@
+profiles:
+  android_app:
+    platformName: Android
+    appium:automationName: UiAutomator2
+    appium:deviceName: "Android Emulator"
+    appium:app: "apps/YourApp.apk"
+    appium:autoGrantPermissions: true
+    appium:newCommandTimeout: 120
+
+  ios_app:
+    platformName: iOS
+    appium:automationName: XCUITest
+    appium:deviceName: "iPhone 15"
+    appium:platformVersion: "${IOS_PLATFORM_VERSION:-}"
+    appium:app: "apps/YourApp.app.zip"
+    appium:newCommandTimeout: 120

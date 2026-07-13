@@ -22,6 +22,36 @@ profiles:
     appium:newCommandTimeout: 120
     appium:noReset: false
 
+  android_hybrid_demo:
+    platformName: Android
+    appium:automationName: UiAutomator2
+    appium:deviceName: "Android Emulator"
+    appium:app: "apps/HybridDemo.apk"
+    appium:autoGrantPermissions: true
+    appium:chromedriverAutodownload: true
+    appium:ensureWebviewsHavePages: true
+    appium:newCommandTimeout: 120
+    appium:noReset: false
+
+  ios_hybrid_demo:
+    platformName: iOS
+    appium:automationName: XCUITest
+    appium:deviceName: "iPhone 15"
+    appium:platformVersion: "${IOS_PLATFORM_VERSION:-}"
+    appium:language: en
+    appium:locale: en_US
+    appium:app: "apps/HybridDemo.app.zip"
+    appium:includeSafariInWebviews: true
+    appium:fullContextList: true
+    appium:additionalWebviewBundleIds:
+      - "dev.mobileframework.hybriddemo"
+    appium:webviewConnectTimeout: 10000
+    appium:connectHardwareKeyboard: false
+    appium:forceSimulatorSoftwareKeyboardPresence: true
+    appium:maxTypingFrequency: 30
+    appium:newCommandTimeout: 120
+    appium:noReset: false
+
   android_mobile_web:
     platformName: Android
     browserName: Chrome

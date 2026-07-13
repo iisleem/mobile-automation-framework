@@ -86,6 +86,38 @@ python scripts/download_sample_apps.py --all
 
 Sample app binaries are ignored by git. They should not be committed to the repository.
 
+## Hybrid Demo Apps Are Missing
+
+Build the hybrid demo apps from source:
+
+```bash
+python scripts/build_hybrid_sample_apps.py --android
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python scripts/build_hybrid_sample_apps.py --ios
+```
+
+Android output: `apps/HybridDemo.apk`.
+iOS simulator output: `apps/HybridDemo.app.zip`.
+
+If Android build fails, verify `ANDROID_HOME` or `ANDROID_SDK_ROOT` points to an SDK with
+`platforms/`, `build-tools/`, `aapt2`, `d8`, `zipalign`, and `apksigner`.
+
+If iOS build fails, verify full Xcode is installed and `xcodebuild` is available.
+
+## iOS Hybrid Example Skips Webview Context
+
+The iOS hybrid demo uses a real `WKWebView` app. On some simulator/Appium/Xcode combinations,
+Appium may expose only `NATIVE_APP` even when the WKWebView is visible. The test skips in that case
+with the available context list so the result is explicit.
+
+Things to check:
+
+- Use full Xcode through `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
+- Keep `appium:includeSafariInWebviews`, `appium:fullContextList`, and
+  `appium:additionalWebviewBundleIds` in the `ios_hybrid_demo` profile.
+- Confirm the app's `WKWebView` sets `isInspectable = true`.
+- Re-run on the simulator/Xcode version used by your team or on a device farm that supports iOS
+  webview inspection.
+
 ## Reports Do Not Open Locally
 
 CI and server-like environments skip report auto-opening. Generate or open reports manually:

@@ -12,6 +12,7 @@
 - [ ] `ruff check .`
 - [ ] `python framework.py run --helpers --no-open-report --no-generate-report`
 - [ ] Device examples were run locally, or this PR does not affect device execution.
+- [ ] Hybrid sample apps were built and run, or this PR does not affect hybrid execution.
 
 ## Notes
 

@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .DS_Store
+build/
 
 reports/allure-results/*
 reports/allure-report/*
@@ -24,4 +25,5 @@ apps/*.aab
 apps/*.app
 apps/*.ipa
 apps/*.zip
+apps/*.idsig
 *.log
