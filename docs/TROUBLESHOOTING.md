@@ -52,13 +52,13 @@ Install full Xcode and point commands at its developer directory:
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl list devices
 ```
 
-If `xcode-select -p` points to Command Line Tools, either switch globally:
+If `xcode-select -p` points to Command Line Tools, prefix iOS run commands and the local Appium
+server with the same developer directory:
 
 ```bash
-sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer appium --base-path /
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --ios-example --profile ios_the_app
 ```
-
-or prefix iOS run commands with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
 ## WebDriverAgent Stays Running After iOS Tests
 
@@ -153,11 +153,12 @@ locally or add a self-hosted runner when you want pipeline device execution.
 ## iOS Doctor Warns About simctl
 
 If full Xcode is installed but `xcode-select -p` points to Command Line Tools, `framework.py doctor`
-may warn that `simctl` is unavailable. For one command, prefix the run with:
+may warn that `simctl` is unavailable. For iOS runs, prefix both Appium and the framework command:
 
 ```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer appium --base-path /
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --ios-example --profile ios_the_app
 ```
 
-When the whole machine should use full Xcode for iOS automation, select it with `xcode-select`
-outside the framework process.
+This keeps the fix scoped to the shell session and does not require changing the machine-wide
+developer directory.

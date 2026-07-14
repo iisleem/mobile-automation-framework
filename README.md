@@ -146,6 +146,7 @@ Use these commands before opening a PR:
 pip install -r requirements.txt -r requirements-dev.txt
 python -m compileall -q framework.py conftest.py screens flows utils scripts tests templates
 ruff check .
+ruff format --check .
 python framework.py run --helpers --no-open-report --no-generate-report
 python framework.py report generate --no-open
 ```
@@ -180,9 +181,10 @@ The iOS example opens the native TheApp simulator build and runs the same login 
 iOS/Appium capabilities.
 
 If your machine has full Xcode installed but `xcode-select -p` still points to Command Line Tools,
-prefix iOS commands with:
+prefix iOS commands and the local Appium server with the full Xcode developer directory:
 
 ```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer appium --base-path /
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --ios-example --profile ios_the_app
 ```
 
