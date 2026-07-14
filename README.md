@@ -158,7 +158,8 @@ is intentionally device-free so CI can validate framework behavior quickly.
 The report smoke command writes the default core product report to
 `reports/automation-report/index.html`.
 
-For a first-run guide with report screenshots and sample commands, see
+For a first-run guide with report screenshots, sample commands, artifact paths, and a real Android
+run artifact, see
 [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md).
 
 ## Run The Android Example

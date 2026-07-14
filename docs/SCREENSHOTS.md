@@ -14,6 +14,10 @@ These lightweight previews show what a reviewer should expect from the framework
 
 ![Core report overview](assets/walkthrough/core-report-overview.png)
 
+## Walkthrough Artifact
+
+![Android retry artifact](assets/walkthrough/android-retry-artifact.png)
+
 ## Helper Catalog
 
 ![Helper catalog preview](assets/helper-catalog-preview.svg)
