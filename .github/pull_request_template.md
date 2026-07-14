@@ -8,7 +8,7 @@
 
 ## Validation
 
-- [ ] `python -m compileall -q framework.py conftest.py screens flows utils scripts tests`
+- [ ] `python -m compileall -q framework.py conftest.py screens flows utils scripts tests templates`
 - [ ] `ruff check .`
 - [ ] `ruff format --check .`
 - [ ] `python framework.py run --helpers --no-open-report --no-generate-report`
