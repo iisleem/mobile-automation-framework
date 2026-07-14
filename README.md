@@ -465,6 +465,9 @@ tests while reusing the framework structure. The starter is intentionally small:
 capability profiles, add product screen objects and flows, and keep framework internals in the
 framework package.
 
+For the shared framework template direction, see the
+[automation-core template strategy](https://github.com/iisleem/automation-core/blob/main/docs/template_strategy.md).
+
 ## Known Limits
 
 - Self-healing means engineer-defined fallback locators. Runtime-generated locator healing is
