@@ -1,6 +1,6 @@
 # Mobile Framework Walkthrough
 
-This walkthrough shows the first run path for a new mobile suite: validate the framework without a
+This walkthrough shows a first-run path for a new mobile suite: validate the framework without a
 device, generate the core product report, then move to Android, iOS, hybrid, or mobile web profiles
 when Appium and devices are ready.
 
@@ -25,11 +25,16 @@ Generate or refresh the default report:
 
 ```bash
 python framework.py report generate --no-open
-open reports/automation-report/index.html
 ```
 
 The default report is the automation-core product report. It summarizes the run, profiles,
-environments, devices, pass rate, slow tests, failure summary, and history trends.
+environments, devices, pass rate, slow tests, failure summary, and history trends. Open
+`reports/automation-report/index.html` locally after generation, or omit `--no-open` when you want
+the CLI to open the report automatically.
+
+Use the dashboard to check run status first, then drill into test details for step timing, action
+attempts, retry notes, and artifact links. The raw result stream remains in `reports/allure-results`
+so the core report and optional official Allure report can be regenerated from the same run data.
 
 ![Core report overview](assets/walkthrough/core-report-overview.png)
 
@@ -44,7 +49,8 @@ python framework.py report generate --report-kind summary --no-open
 
 ## 3. Run Android And iOS Samples
 
-Start Appium in a separate terminal:
+Start Appium in a separate terminal. The command does not require `sudo` when Appium and its drivers
+are installed in your user-managed Node environment:
 
 ```bash
 appium --base-path /
@@ -62,7 +68,7 @@ Run Android:
 python framework.py run --android-example --profile android_the_app --no-open-report
 ```
 
-Run iOS:
+Run iOS with a full Xcode developer directory when `xcode-select` points at Command Line Tools:
 
 ```bash
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
@@ -70,8 +76,14 @@ python framework.py run --ios-example --profile ios_the_app --device-name "iPhon
 ```
 
 On failures the framework captures screenshots, page source, logs, and optional recordings according
-to `config/settings.yaml`. Action-level retries validate that each sensitive mobile action actually
-completed before the next step continues; test-level retries still handle full-test flakiness.
+to `config/settings.yaml`. This Android artifact came from a real sample run where a system overlay
+interrupted the first attempt and the test passed on retry:
+
+![Android retry artifact](assets/walkthrough/android-retry-artifact.png)
+
+Action-level retries validate that each sensitive mobile action actually completed before the next
+step continues. Test-level retries rerun the whole test, so a passed run can still leave useful
+artifacts from an earlier failed attempt.
 
 ## 4. Run Hybrid And Mobile Web Samples
 
@@ -96,9 +108,25 @@ python framework.py run --mobile-web --profile ios_mobile_web --device-name "iPh
 ```
 
 Hybrid tests use `ContextHelper` to move between `NATIVE_APP` and webview contexts. Native profiles
-do not enable webview discovery by default; hybrid profiles do.
+do not enable webview discovery by default; hybrid profiles do. Mobile context switching is timing
+sensitive: wait for the app screen first, then switch to the webview or browser context, and switch
+back to native before checking native navigation or system UI.
 
-## 5. Start A Product Suite
+## 5. Find Artifacts
+
+The default artifact locations are:
+
+- `reports/automation-report/index.html` for the core product report.
+- `reports/allure-results` for raw test result files and attachments.
+- `screenshots` for failure screenshots.
+- `source_dumps` for page source captured on failure.
+- `logs` for device and framework logs.
+- `recordings` for optional video artifacts when recording is enabled.
+
+The report links back to attachments from the result stream. The filesystem folders are still useful
+when debugging a device locally or attaching one failed attempt to a ticket.
+
+## 6. Start A Product Suite
 
 Use the starter project when creating a product-specific suite:
 
