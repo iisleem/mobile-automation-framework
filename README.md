@@ -85,6 +85,7 @@ mobile-automation-framework/
 │   ├── FEATURE_PARITY.md
 │   ├── EXAMPLES.md
 │   ├── DEVICE_CI.md
+│   ├── WALKTHROUGH.md
 │   ├── SCREENSHOTS.md
 │   ├── TROUBLESHOOTING.md
 │   └── helpers_catalog.html
@@ -156,6 +157,9 @@ is intentionally device-free so CI can validate framework behavior quickly.
 
 The report smoke command writes the default core product report to
 `reports/automation-report/index.html`.
+
+For a first-run guide with report screenshots and sample commands, see
+[docs/WALKTHROUGH.md](docs/WALKTHROUGH.md).
 
 ## Run The Android Example
 
