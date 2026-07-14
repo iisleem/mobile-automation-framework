@@ -446,7 +446,9 @@ a self-hosted runner or device farm when the device lab is ready. The manual wor
 
 This repository is marked as a GitHub template repository. It also includes a copyable starter under
 `templates/starter_project/` for teams that want to keep only product-specific screens, flows, and
-tests while reusing the framework structure.
+tests while reusing the framework structure. The starter is intentionally small: replace the sample
+capability profiles, add product screen objects and flows, and keep framework internals in the
+framework package.
 
 ## Known Limits
 
