@@ -79,8 +79,9 @@ The web and mobile frameworks both support conservative self-healing: engineers 
 locator and ordered fallbacks. If the primary locator fails, the framework tries the fallback
 locators and logs which fallback was used.
 
-Neither framework currently performs AI auto-healing that invents new locators at runtime. That is a
-different feature with different risk: it can hide product changes if it is not heavily audited.
+Neither framework currently performs runtime auto-healing that invents new locators during a test
+run. That is a different feature with different risk: it can hide product changes if it is not
+heavily audited.
 
 ## Retry Model
 

@@ -428,8 +428,8 @@ self.locator_with_fallbacks(
 )
 ```
 
-This matches the web framework concept: it is engineer-defined fallback healing, not AI-based
-auto-healing that invents selectors at runtime.
+This matches the web framework concept: it is engineer-defined fallback healing, not
+runtime-generated locator healing that invents selectors during a test run.
 
 ## CI And Reports
 
@@ -450,8 +450,8 @@ tests while reusing the framework structure.
 
 ## Known Limits
 
-- Self-healing means engineer-defined fallback locators. AI-based auto-healing is intentionally out
-  of scope for this release.
+- Self-healing means engineer-defined fallback locators. Runtime-generated locator healing is
+  intentionally out of scope for this release.
 - iOS WKWebView context visibility depends on the local Web Inspector/Appium/Xcode environment.
   Hybrid profiles include webview discovery capabilities, and `ContextHelper` can match by
   `title`, `url_contains`, and `bundle_id`; the iOS hybrid example still skips clearly if Appium
