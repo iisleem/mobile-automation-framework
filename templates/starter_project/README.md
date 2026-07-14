@@ -13,3 +13,6 @@ Recommended first steps:
 This folder is intentionally small. It shows the shape of a project without copying the framework
 internals. Keep only product-specific capabilities, screens, flows, and tests here; shared mobile
 helpers should stay in the framework.
+
+For the shared framework template direction, see the
+[automation-core template strategy](https://github.com/iisleem/automation-core/blob/main/docs/template_strategy.md).
