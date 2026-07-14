@@ -176,11 +176,19 @@ and failure artifacts.
 
 ## Run The iOS Example
 
-Start an iOS simulator and Appium with the XCUITest driver:
+Start an iOS simulator and Appium with the XCUITest driver. `--device-name` is fine when there is
+one matching simulator, but `--udid` is more reliable when several simulators share a name or Appium
+tries to create a temporary `appiumTest...` clone.
 
 ```bash
-python framework.py run --ios-example --profile ios_the_app --device-name "iPhone 15"
+xcrun simctl list devices available
+xcrun simctl boot <UDID>
+xcrun simctl bootstatus <UDID> -b
+python framework.py run --ios-example --profile ios_the_app --udid <UDID>
 ```
+
+Prefix the `xcrun` commands with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` when
+your shell needs the full Xcode toolchain.
 
 The iOS example opens the native TheApp simulator build and runs the same login journey through
 iOS/Appium capabilities.
@@ -190,7 +198,7 @@ prefix iOS commands and the local Appium server with the full Xcode developer di
 
 ```bash
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer appium --base-path /
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --ios-example --profile ios_the_app
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --ios-example --profile ios_the_app --udid <UDID>
 ```
 
 ## Run Mobile Web
@@ -201,7 +209,7 @@ without a network route, and iOS serves the same tiny HTML page locally for Safa
 
 ```bash
 python framework.py run --mobile-web --profile android_mobile_web
-python framework.py run --mobile-web --profile ios_mobile_web --device-name "iPhone 15"
+python framework.py run --mobile-web --profile ios_mobile_web --udid <UDID>
 ```
 
 For real site tests, the configured URL fixture lives in `config/environments.yaml` as
@@ -220,7 +228,7 @@ Then run Android or iOS:
 
 ```bash
 python framework.py run --hybrid-example --profile android_hybrid_demo
-python framework.py run --hybrid-example --profile ios_hybrid_demo --device-name "iPhone 15"
+python framework.py run --hybrid-example --profile ios_hybrid_demo --udid <UDID>
 ```
 
 The test starts in native context, verifies the webview, switches to a webview context with
@@ -251,13 +259,14 @@ Override device details:
 
 ```bash
 python framework.py run --profile ios_the_app --device-name "iPhone 15 Pro" --platform-version "18.0"
+python framework.py run --profile ios_the_app --udid <UDID>
 ```
 
 Run on a real device or simulator UDID:
 
 ```bash
 python framework.py run --profile android_the_app --udid emulator-5554
-python framework.py run --profile ios_the_app --udid YOUR-IOS-UDID
+python framework.py run --profile ios_the_app --udid <UDID>
 ```
 
 Run a profile matrix:

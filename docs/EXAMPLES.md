@@ -18,9 +18,18 @@ def test_android_login(mobile_driver):
 
 ## iOS Native
 
+Pick a simulator UDID when more than one simulator has the same name, or when you want to reuse a
+known booted simulator:
+
+```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl list devices available
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl boot <UDID>
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl bootstatus <UDID> -b
+```
+
 ```bash
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
-python framework.py run --ios-example --profile ios_the_app --device-name "iPhone 16" --no-open-report
+python framework.py run --ios-example --profile ios_the_app --udid <UDID> --no-open-report
 ```
 
 ## Hybrid App
@@ -35,7 +44,7 @@ Run Android or iOS hybrid:
 
 ```bash
 python framework.py run --hybrid-example --profile android_hybrid_demo --no-open-report
-python framework.py run --hybrid-example --profile ios_hybrid_demo --device-name "iPhone 16" --no-open-report
+python framework.py run --hybrid-example --profile ios_hybrid_demo --udid <UDID> --no-open-report
 ```
 
 The test starts in native context, switches to the webview, interacts with CSS selectors, then
@@ -70,7 +79,7 @@ message.
 
 ```bash
 python framework.py run --mobile-web --profile android_mobile_web --no-open-report
-python framework.py run --mobile-web --profile ios_mobile_web --device-name "iPhone 16" --no-open-report
+python framework.py run --mobile-web --profile ios_mobile_web --udid <UDID> --no-open-report
 ```
 
 ## Deep Links

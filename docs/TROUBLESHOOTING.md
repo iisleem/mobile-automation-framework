@@ -60,6 +60,35 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer appium --base-path /
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --ios-example --profile ios_the_app
 ```
 
+## iOS Simulator Boot Hangs Or Appium Creates A Clone
+
+If an iOS run hangs with messages like `failed to finish booting after 120s`, `Waiting on Data
+Migration`, or a temporary simulator named `appiumTest...`, avoid name-based simulator selection for
+that run. Boot a known simulator yourself and pass its UDID to the framework:
+
+```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl list devices available
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl boot <UDID>
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl bootstatus <UDID> -b
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --ios-example --profile ios_the_app --udid <UDID>
+```
+
+Use the same UDID pattern for hybrid and mobile web:
+
+```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --hybrid-example --profile ios_hybrid_demo --udid <UDID>
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --mobile-web --profile ios_mobile_web --udid <UDID>
+```
+
+`--device-name` is still useful on a clean simulator list, but UDID selection is safer when several
+devices share a name or Appium tries to create a temporary clone. If a run was interrupted, shut down
+the stuck simulator and stop stale WebDriverAgent processes before retrying:
+
+```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun simctl shutdown <UDID>
+pkill -f 'appium-webdriveragent/WebDriverAgent.xcodeproj'
+```
+
 ## WebDriverAgent Stays Running After iOS Tests
 
 If an iOS run is interrupted, stop stale WebDriverAgent build processes and shut down the simulator:
