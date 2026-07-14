@@ -1,24 +1,24 @@
 from __future__ import annotations
 
-import re
+from automation_core.helpers import (
+    extract_first_match as core_extract_first_match,
+    extract_numbers as core_extract_numbers,
+    extract_otp as core_extract_otp,
+    normalize_text as core_normalize_text,
+)
 
 
 def extract_otp(text: str, regex: str = r"\b\d{4,8}\b") -> str | None:
-    return extract_first_match(text, regex)
+    return core_extract_otp(text, regex)
 
 
 def extract_first_match(text: str, regex: str) -> str | None:
-    match = re.search(regex, text)
-    if not match:
-        return None
-    if match.groups():
-        return match.group(1)
-    return match.group(0)
+    return core_extract_first_match(text, regex)
 
 
 def extract_numbers(text: str) -> list[str]:
-    return re.findall(r"\d+(?:\.\d+)?", text)
+    return core_extract_numbers(text, allow_decimal=True)
 
 
 def normalize_text(text: str) -> str:
-    return re.sub(r"\s+", " ", text).strip()
+    return core_normalize_text(text)

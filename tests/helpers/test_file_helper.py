@@ -18,3 +18,5 @@ def test_file_helpers(tmp_path: Path):
     assert wait_for_file(directory, "*.pdf", timeout_seconds=1) == target
     assert assert_file_exists(target) == target
     assert_file_extension(target, ".pdf")
+    assert cleanup_directory(directory) == directory
+    assert directory.exists()

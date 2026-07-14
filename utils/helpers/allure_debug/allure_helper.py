@@ -1,39 +1,15 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-import json
-from typing import Iterator
+from automation_core.reporting import attach_json as core_attach_json
+from automation_core.reporting import attach_text as core_attach_text
+from automation_core.reporting import step
 
-
-@contextmanager
-def step(title: str) -> Iterator[None]:
-    try:
-        import allure
-    except Exception:
-        yield
-        return
-
-    with allure.step(title):
-        yield
+__all__ = ["attach_json", "attach_text", "step"]
 
 
 def attach_text(name: str, value: str) -> None:
-    try:
-        import allure
-
-        allure.attach(value, name=name, attachment_type=allure.attachment_type.TEXT)
-    except Exception:
-        return
+    core_attach_text(value, name=name)
 
 
 def attach_json(name: str, value) -> None:
-    try:
-        import allure
-
-        allure.attach(
-            json.dumps(value, indent=2, sort_keys=True),
-            name=name,
-            attachment_type=allure.attachment_type.JSON,
-        )
-    except Exception:
-        return
+    core_attach_json(value, name=name)

@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 import framework
+from utils import report_generator
 from utils import reporting
 
 
@@ -115,6 +116,10 @@ def test_report_open_auto_uses_product_report_not_official_allure(monkeypatch, t
 
     assert framework._find_report("auto") == product_report
     assert framework._find_report("allure") == official_allure
+
+
+def test_legacy_report_reader_returns_empty_for_missing_results_dir(tmp_path):
+    assert report_generator.read_allure_results(tmp_path / "missing-results") == []
 
 
 def _status(requested=False, generated=False, path=None, status="not_requested"):

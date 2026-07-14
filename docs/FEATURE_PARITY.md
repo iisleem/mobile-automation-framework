@@ -24,6 +24,7 @@ mobile automation problem.
 | Mobile web | Supported | Appium Chrome/Safari profiles and a runnable mobile web smoke example. |
 | Profile matrix | Supported | `scripts/run_device_matrix.py` runs one pytest suite per capability profile and builds a dashboard. |
 | Helper catalog | Supported | `docs/FRAMEWORK_HELPERS.md` and `docs/helpers_catalog.html` document reusable helpers. |
+| Neutral helper wrappers | Supported | Shared polling, file, text, data, soft assertion, config, logging, and report-opening behavior delegates to `automation-core` while preserving mobile imports. |
 
 ## Reporting Modes
 

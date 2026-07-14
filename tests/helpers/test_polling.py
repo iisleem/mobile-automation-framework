@@ -21,3 +21,15 @@ def test_wait_until_returns_truthy_value():
 def test_wait_until_raises_timeout():
     with pytest.raises(TimeoutError):
         wait_until(lambda: None, timeout_seconds=0.02, interval_seconds=0.01)
+
+
+def test_wait_until_ignores_transient_exceptions():
+    attempts = {"count": 0}
+
+    def condition():
+        attempts["count"] += 1
+        if attempts["count"] == 1:
+            raise RuntimeError("not ready")
+        return "ready"
+
+    assert wait_until(condition, timeout_seconds=1, interval_seconds=0.01) == "ready"

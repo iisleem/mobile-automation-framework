@@ -33,6 +33,7 @@ test setup, cleanup, and assertions.
 - Action-level retries with post-action verification for mobile-sensitive actions
 - iOS keyboard typing helper for secure fields and simulator keyboard-sensitive inputs
 - Mobile helpers for gestures, contexts, app lifecycle, permissions, deep links, clipboard, device state, accessibility, visual checks, polling, API setup, files, text extraction, test data, and soft assertions
+- Neutral helper import paths stay compatible while delegating shared behavior to `automation-core`
 - Runnable Android native example using TheApp
 - Runnable iOS native example using TheApp
 - Runnable hybrid example using local Android WebView and iOS WKWebView sample apps
@@ -65,7 +66,7 @@ mobile-automation-framework/
 │   ├── examples/mobile_web/      # Runnable Appium mobile web smoke example
 │   └── helpers/                  # Fast helper/unit tests
 ├── utils/
-│   ├── helpers/                  # Reusable mobile automation helper library
+│   ├── helpers/                  # Mobile helpers plus neutral compatibility wrappers
 │   ├── capabilities.py           # Capability profile resolver
 │   ├── mobile_driver.py          # Appium driver factory
 │   ├── reporting.py              # Mobile adapter for automation-core reporting

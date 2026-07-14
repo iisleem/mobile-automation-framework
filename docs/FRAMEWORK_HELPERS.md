@@ -3,6 +3,11 @@
 Reusable helpers for common mobile automation tasks. Helpers are intentionally small and explicit
 so tests stay readable without hiding product behavior.
 
+Environment-neutral helpers such as polling, files, text extraction, test data, and soft assertions
+keep their mobile import paths while delegating shared behavior to `automation-core`. Appium-specific
+helpers for gestures, contexts, devices, permissions, apps, clipboard, and visual checks remain
+mobile-owned.
+
 ## Helper Index
 
 | Helper | Category | Tags | Description |
