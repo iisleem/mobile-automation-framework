@@ -68,11 +68,24 @@ Run Android:
 python framework.py run --android-example --profile android_the_app --no-open-report
 ```
 
+Choose an iOS simulator before running iOS samples. `--device-name` can work on a simple machine,
+but `--udid` avoids ambiguity when multiple simulators have the same name and prevents Appium from
+choosing or cloning a simulator you did not intend to use:
+
+```bash
+xcrun simctl list devices available
+xcrun simctl boot <UDID>
+xcrun simctl bootstatus <UDID> -b
+```
+
+Prefix the `xcrun` commands with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` when
+your shell needs the full Xcode toolchain.
+
 Run iOS with a full Xcode developer directory when `xcode-select` points at Command Line Tools:
 
 ```bash
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
-python framework.py run --ios-example --profile ios_the_app --device-name "iPhone 16" --no-open-report
+python framework.py run --ios-example --profile ios_the_app --udid <UDID> --no-open-report
 ```
 
 On failures the framework captures screenshots, page source, logs, and optional recordings according
@@ -97,14 +110,14 @@ Run hybrid profiles:
 
 ```bash
 python framework.py run --hybrid-example --profile android_hybrid_demo --no-open-report
-python framework.py run --hybrid-example --profile ios_hybrid_demo --device-name "iPhone 16" --no-open-report
+python framework.py run --hybrid-example --profile ios_hybrid_demo --udid <UDID> --no-open-report
 ```
 
 Run mobile web profiles:
 
 ```bash
 python framework.py run --mobile-web --profile android_mobile_web --no-open-report
-python framework.py run --mobile-web --profile ios_mobile_web --device-name "iPhone 16" --no-open-report
+python framework.py run --mobile-web --profile ios_mobile_web --udid <UDID> --no-open-report
 ```
 
 Hybrid tests use `ContextHelper` to move between `NATIVE_APP` and webview contexts. Native profiles
