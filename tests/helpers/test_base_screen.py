@@ -34,8 +34,9 @@ class _KeyboardDriver(_Driver):
 
 
 class _Element:
-    def __init__(self, value: str = "") -> None:
+    def __init__(self, value: str = "", package_name: str = "") -> None:
         self.value = value
+        self.package_name = package_name
         self.property_value = ""
         self.click_calls = 0
         self.clear_calls = 0
@@ -61,6 +62,8 @@ class _Element:
         self.value = value
 
     def get_attribute(self, name: str) -> str:
+        if name == "package":
+            return self.package_name
         if name == "value":
             return self.value
         return ""
@@ -73,6 +76,20 @@ class _Element:
     @property
     def text(self) -> str:
         return self.value
+
+
+class _DialogDriver(_Driver):
+    def __init__(self, button: "_Element", button_text: str = "Wait") -> None:
+        super().__init__("Android")
+        self.button = button
+        self.button_text = button_text
+        self.find_elements_calls = 0
+
+    def find_elements(self, by: str, value: str):
+        self.find_elements_calls += 1
+        if self.button_text in value and self.button.click_calls == 0:
+            return [self.button]
+        return []
 
 
 def test_base_screen_skips_ios_only_locators_on_android():
@@ -143,6 +160,54 @@ def test_tap_retries_command_failures():
     screen.tap(screen.accessibility_id("loginBtn", "Login"))
 
     assert element.click_calls == 3
+
+
+def test_tap_dismisses_android_system_dialogs():
+    element = _Element()
+    dialog_button = _Element(package_name="android")
+    driver = _DialogDriver(dialog_button)
+    screen = BaseScreen(
+        driver,
+        settings={"retries": {"action_default": 3, "action_delay_seconds": 0}},
+    )
+    screen._resolve = lambda locator, timeout_ms=None: element
+
+    screen.tap(screen.accessibility_id("loginBtn", "Login"))
+
+    assert dialog_button.click_calls == 1
+    assert element.click_calls == 1
+
+
+def test_android_system_dialogs_do_not_click_close_app():
+    element = _Element()
+    dialog_button = _Element()
+    driver = _DialogDriver(dialog_button, button_text="Close app")
+    screen = BaseScreen(
+        driver,
+        settings={"retries": {"action_default": 1, "action_delay_seconds": 0}},
+    )
+    screen._resolve = lambda locator, timeout_ms=None: element
+
+    screen.tap(screen.accessibility_id("loginBtn", "Login"))
+
+    assert dialog_button.click_calls == 0
+    assert element.click_calls == 1
+
+
+def test_android_system_dialogs_skip_app_owned_buttons():
+    element = _Element()
+    dialog_button = _Element(package_name="com.example.app")
+    driver = _DialogDriver(dialog_button, button_text="OK")
+    screen = BaseScreen(
+        driver,
+        settings={"retries": {"action_default": 1, "action_delay_seconds": 0}},
+    )
+    screen._resolve = lambda locator, timeout_ms=None: element
+
+    screen.tap(screen.accessibility_id("loginBtn", "Login"))
+
+    assert dialog_button.click_calls == 0
+    assert element.click_calls == 1
 
 
 def test_tap_retries_when_post_action_verification_fails_then_passes():

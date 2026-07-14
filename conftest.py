@@ -14,6 +14,7 @@ from utils.artifact_helper import (
 from utils.capabilities import resolve_capabilities
 from utils.config_reader import ConfigReader
 from utils.helpers.api import ApiClient
+from utils.helpers.device import dismiss_android_system_dialogs
 from utils.logger import get_logger
 from utils.mobile_driver import create_mobile_driver, describe_capabilities, is_appium_server_ready
 from utils.reporting import (
@@ -152,6 +153,7 @@ def mobile_driver(
     LOGGER.info("Creating Appium session with capabilities:\n%s", describe_capabilities(mobile_capabilities))
     driver = create_mobile_driver(server_url, mobile_capabilities)
     driver.implicitly_wait(0)
+    dismiss_android_system_dialogs(driver, LOGGER)
 
     recording_started = _start_recording_if_enabled(driver, framework_config)
     try:

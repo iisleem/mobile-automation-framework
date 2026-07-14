@@ -13,6 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from utils.config_reader import ConfigReader
 from utils.helpers.allure_debug import step
+from utils.helpers.device import dismiss_android_system_dialogs
 from utils.helpers.gestures import GestureHelper
 from utils.logger import get_logger
 
@@ -65,11 +66,20 @@ class BaseScreen:
         return MobileLocatorGroup(description=description, candidates=candidates)
 
     def find(self, locator: MobileLocator | MobileLocatorGroup, timeout_ms: int | None = None):
+        self.dismiss_system_dialogs()
         return self._resolve(locator, timeout_ms=timeout_ms)
 
     def find_all(self, locator: MobileLocator, timeout_ms: int | None = None):
         self.find(locator, timeout_ms=timeout_ms)
         return self.driver.find_elements(locator.by, locator.value)
+
+    def is_visible(self, locator: MobileLocator | MobileLocatorGroup, timeout_ms: int | None = None) -> bool:
+        try:
+            self.dismiss_system_dialogs()
+            self._resolve(locator, timeout_ms=timeout_ms or self._short_timeout_ms())
+            return True
+        except (TimeoutException, WebDriverException):
+            return False
 
     def tap(
         self,
@@ -80,8 +90,10 @@ class BaseScreen:
         action_name = f"Tap {description or self._description(locator)}"
 
         def action() -> None:
+            self.dismiss_system_dialogs()
             resolved = self._resolve(locator)
             resolved.click()
+            self.dismiss_system_dialogs(timeout_seconds=1.0)
             self._verify_action_result(action_name, verify)
 
         with step(action_name):
@@ -98,6 +110,7 @@ class BaseScreen:
         action_name = f"Type into {description or self._description(locator)}"
 
         def action() -> None:
+            self.dismiss_system_dialogs()
             if self._is_ios():
                 self._configure_ios_keyboard()
             element = self._resolve(locator)
@@ -124,6 +137,7 @@ class BaseScreen:
         action_name = f"Type with keyboard into {description or self._description(locator)}"
 
         def action() -> None:
+            self.dismiss_system_dialogs()
             element = self._resolve(locator)
             if self._is_ios():
                 self._configure_ios_keyboard()
@@ -149,6 +163,7 @@ class BaseScreen:
 
     def expect_visible(self, locator: MobileLocator | MobileLocatorGroup, description: str | None = None) -> None:
         with step(f"Verify {description or self._description(locator)} is visible"):
+            self.dismiss_system_dialogs()
             self._resolve(locator)
 
     def expect_text_contains(self, locator: MobileLocator | MobileLocatorGroup, expected_text: str) -> None:
@@ -180,6 +195,9 @@ class BaseScreen:
             self.driver.hide_keyboard()
         except WebDriverException:
             return
+
+    def dismiss_system_dialogs(self, timeout_seconds: float = 0.0) -> bool:
+        return dismiss_android_system_dialogs(self.driver, LOGGER, timeout_seconds=timeout_seconds)
 
     def _resolve(self, locator: MobileLocator | MobileLocatorGroup, timeout_ms: int | None = None):
         raw_candidates = locator.candidates if isinstance(locator, MobileLocatorGroup) else (locator,)
@@ -273,9 +291,14 @@ class BaseScreen:
             try:
                 self._resolve(verify, timeout_ms=self._default_timeout_ms())
             except TimeoutException as error:
+                if self.dismiss_system_dialogs(timeout_seconds=1.0):
+                    try:
+                        self._resolve(verify, timeout_ms=self._short_timeout_ms())
+                        return
+                    except TimeoutException:
+                        pass
                 raise AssertionError(
-                    f"Post-action verification failed for {action_name}: "
-                    f"{self._description(verify)} was not visible"
+                    f"Post-action verification failed for {action_name}: {self._description(verify)} was not visible"
                 ) from error
             return
         result = verify()

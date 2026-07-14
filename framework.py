@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -414,7 +415,16 @@ def _check_cli_tools(doctor: Doctor) -> None:
             if simctl.returncode == 0:
                 doctor.pass_(f"iOS simulator tool available: {simctl.stdout.strip()}")
             else:
-                doctor.warn("iOS simulator tool `simctl` not found. iOS simulator runs need full Xcode selected.")
+                selected_dir = _selected_developer_dir()
+                developer_dir = os.getenv("DEVELOPER_DIR")
+                context = (
+                    f" DEVELOPER_DIR={developer_dir}." if developer_dir else f" Selected developer dir: {selected_dir}."
+                )
+                doctor.warn(
+                    "iOS simulator tool `simctl` not found."
+                    f"{context} Use DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer for iOS commands "
+                    "or select a full Xcode install with xcode-select when needed."
+                )
 
 
 def _check_appium_server(doctor: Doctor) -> None:
@@ -425,6 +435,11 @@ def _check_appium_server(doctor: Doctor) -> None:
         doctor.pass_(f"Appium server reachable: {server_url}")
     else:
         doctor.warn(f"Appium server not reachable at {server_url}. Start it before device tests.")
+
+
+def _selected_developer_dir() -> str:
+    selected = subprocess.run(["xcode-select", "-p"], capture_output=True, text=True)
+    return selected.stdout.strip() if selected.returncode == 0 else "unknown"
 
 
 def _check_sample_apps(doctor: Doctor) -> None:

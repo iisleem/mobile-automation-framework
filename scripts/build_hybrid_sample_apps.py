@@ -190,7 +190,9 @@ def _latest_android_jar(sdk_root: Path) -> Path:
 
 
 def _latest_build_tools(sdk_root: Path) -> Path:
-    versions = sorted((sdk_root / "build-tools").iterdir(), key=lambda path: tuple(int(part) for part in path.name.split(".")))
+    versions = sorted(
+        (sdk_root / "build-tools").iterdir(), key=lambda path: tuple(int(part) for part in path.name.split("."))
+    )
     for candidate in reversed(versions):
         if all((candidate / tool).exists() for tool in ("aapt2", "d8", "zipalign", "apksigner")):
             return candidate
