@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-import shutil
+
+from automation_core.reporting import get_or_install_allure_cli
 
 
 def get_allure_cli(project_root: Path, logger=None) -> str | None:
-    executable = shutil.which("allure")
-    if executable:
-        return executable
-    if logger:
-        logger.warning("Allure CLI was not found. Core product reports remain available; official Allure is optional.")
-    return None
+    return get_or_install_allure_cli(project_root, logger, install_if_missing=False)
