@@ -11,4 +11,5 @@ Recommended first steps:
 5. Run helper tests and at least one device smoke test before opening a PR.
 
 This folder is intentionally small. It shows the shape of a project without copying the framework
-internals.
+internals. Keep only product-specific capabilities, screens, flows, and tests here; shared mobile
+helpers should stay in the framework.
