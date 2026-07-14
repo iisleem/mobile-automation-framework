@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-import subprocess
 from typing import Generator
 from urllib.request import urlretrieve
 
 import pytest
 
-from utils.allure_cli import get_allure_cli
 from utils.artifact_helper import (
     capture_failure_artifacts,
     safe_artifact_name,
@@ -16,10 +14,17 @@ from utils.artifact_helper import (
 from utils.capabilities import resolve_capabilities
 from utils.config_reader import ConfigReader
 from utils.helpers.api import ApiClient
+from utils.helpers.device import dismiss_android_system_dialogs
 from utils.logger import get_logger
 from utils.mobile_driver import create_mobile_driver, describe_capabilities, is_appium_server_ready
-from utils.report_generator import generate_html_report
-from utils.report_opener import open_report
+from utils.reporting import (
+    DEFAULT_REPORT_KIND,
+    DEFAULT_RESULTS_DIR,
+    REPORT_KIND_CHOICES,
+    finalize_mobile_report,
+    preferred_report_path,
+    reporting_result_lines,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -38,6 +43,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption("--app", help="Override appium:app.")
     group.addoption("--no-reset", action="store_true", default=None, help="Set appium:noReset=true.")
     group.addoption("--full-reset", action="store_true", default=False, help="Set appium:fullReset=true.")
+    group.addoption(
+        "--report-kind",
+        choices=REPORT_KIND_CHOICES,
+        default=DEFAULT_REPORT_KIND,
+        help="Post-run report kind: core, allure, both, or summary. Defaults to core.",
+    )
     group.addoption("--no-generate-report", action="store_true", default=False)
     group.addoption("--no-open-report", action="store_true", default=False)
 
@@ -81,9 +92,10 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     if session.config.getoption("--no-generate-report"):
         return
 
-    report_path = _generate_report_after_session()
-    if report_path and not session.config.getoption("--no-open-report"):
-        open_report(report_path, LOGGER)
+    _generate_report_after_session(
+        session.config,
+        open_report=not session.config.getoption("--no-open-report"),
+    )
 
 
 @pytest.fixture(scope="session")
@@ -141,6 +153,7 @@ def mobile_driver(
     LOGGER.info("Creating Appium session with capabilities:\n%s", describe_capabilities(mobile_capabilities))
     driver = create_mobile_driver(server_url, mobile_capabilities)
     driver.implicitly_wait(0)
+    dismiss_android_system_dialogs(driver, LOGGER)
 
     recording_started = _start_recording_if_enabled(driver, framework_config)
     try:
@@ -182,8 +195,7 @@ def _assert_appium_server_ready(server_url: str) -> None:
     if is_appium_server_ready(server_url):
         return
     pytest.fail(
-        f"Appium server is not reachable at {server_url}. Start it with `appium --base-path /` "
-        "or pass --appium-server."
+        f"Appium server is not reachable at {server_url}. Start it with `appium --base-path /` or pass --appium-server."
     )
 
 
@@ -196,9 +208,7 @@ def _assert_app_path_ready(capabilities: dict, framework_config: dict) -> None:
         return
     if _download_known_sample_app(path, framework_config):
         return
-    pytest.fail(
-        f"App file does not exist: {app_path}. {_missing_app_hint(path)}"
-    )
+    pytest.fail(f"App file does not exist: {app_path}. {_missing_app_hint(path)}")
 
 
 def _download_known_sample_app(path: Path, framework_config: dict) -> bool:
@@ -255,21 +265,44 @@ def _stop_recording_if_needed(
         save_screen_recording(encoded, PROJECT_ROOT, framework_config, test_name)
 
 
-def _generate_report_after_session() -> Path | None:
-    results_dir = PROJECT_ROOT / "reports" / "allure-results"
-    output_dir = PROJECT_ROOT / "reports" / "allure-report"
-    allure_executable = get_allure_cli(PROJECT_ROOT, LOGGER)
+def _generate_report_after_session(config: pytest.Config, *, open_report: bool) -> Path | None:
+    profile_name = _profile_name(config)
+    result = finalize_mobile_report(
+        project_root=PROJECT_ROOT,
+        results_dir=DEFAULT_RESULTS_DIR,
+        report_kind=config.getoption("--report-kind"),
+        open_report=open_report,
+        env_name=config.getoption("--env"),
+        profile_name=profile_name,
+        capabilities=_report_capabilities(config, profile_name),
+        logger=LOGGER,
+    )
+    for line in reporting_result_lines(result):
+        if line.startswith(("Warning:", "Error:")):
+            LOGGER.warning(line)
+        else:
+            LOGGER.info(line)
+    if not result.ok:
+        LOGGER.warning("Post-run reporting did not produce the requested primary report.")
+    return preferred_report_path(result)
 
-    if allure_executable:
-        try:
-            subprocess.run(
-                [allure_executable, "generate", str(results_dir), "-o", str(output_dir), "--clean"],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            return output_dir / "index.html"
-        except Exception as error:
-            LOGGER.warning("Official Allure generation failed. Falling back: %s", error)
 
-    return generate_html_report(results_dir, output_dir)
+def _report_capabilities(config: pytest.Config, profile_name: str) -> dict:
+    capabilities_config = ConfigReader(PROJECT_ROOT).read_capabilities()
+    try:
+        return resolve_capabilities(
+            PROJECT_ROOT,
+            capabilities_config,
+            profile_name,
+            overrides={
+                "app": config.getoption("--app"),
+                "device_name": config.getoption("--device-name"),
+                "platform_version": config.getoption("--platform-version"),
+                "udid": config.getoption("--udid"),
+                "no_reset": config.getoption("--no-reset"),
+                "full_reset": config.getoption("--full-reset"),
+            },
+        )
+    except Exception as error:
+        LOGGER.warning("Could not resolve mobile report metadata for profile %s: %s", profile_name, error)
+        return _profile_capabilities(profile_name)

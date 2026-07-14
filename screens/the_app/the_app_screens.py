@@ -17,6 +17,9 @@ class TheAppHomeScreen(BaseScreen):
     def assert_loaded(self) -> None:
         self.expect_visible(self.login_screen_item, "TheApp home")
 
+    def is_loaded(self) -> bool:
+        return self.is_visible(self.login_screen_item)
+
     def open_login(self) -> "TheAppLoginScreen":
         login_screen = TheAppLoginScreen(self.driver, self.settings)
         self.tap(self.login_screen_item, "Login Screen", verify=login_screen.username_field)
@@ -28,7 +31,10 @@ class TheAppLoginScreen(BaseScreen):
     def username_field(self):
         return self.locator_with_fallbacks(
             "Username field",
-            (AppiumBy.IOS_PREDICATE, 'type == "XCUIElementTypeTextField" AND (name == "username" OR label == "username")'),
+            (
+                AppiumBy.IOS_PREDICATE,
+                'type == "XCUIElementTypeTextField" AND (name == "username" OR label == "username")',
+            ),
             (AppiumBy.ACCESSIBILITY_ID, "username"),
             (AppiumBy.XPATH, "//*[@name='username' or @resource-id='username']"),
         )
@@ -55,6 +61,9 @@ class TheAppLoginScreen(BaseScreen):
 
     def assert_loaded(self) -> None:
         self.expect_visible(self.username_field, "Login screen")
+
+    def is_loaded(self) -> bool:
+        return self.is_visible(self.username_field)
 
     def login(self, username: str, password: str) -> "TheAppSecretScreen":
         self.type_text(self.username_field, username, description="Username")
@@ -94,6 +103,9 @@ class TheAppSecretScreen(BaseScreen):
     def assert_logged_in_as(self, username: str) -> None:
         self.expect_visible(self.logged_in_message, "Logged-in message")
         self.assert_source_contains(username)
+
+    def is_loaded(self) -> bool:
+        return self.is_visible(self.logged_in_message)
 
     def logout(self) -> TheAppLoginScreen:
         self.tap(self.logout_button, "Logout")

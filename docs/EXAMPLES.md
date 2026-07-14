@@ -104,3 +104,19 @@ def test_location_permission(mobile_driver):
 ```bash
 python framework.py run --profiles android_the_app android_mobile_web --profile-workers 2 --no-open-report
 ```
+
+## Reports
+
+The default post-run report is the core product report:
+
+```bash
+python framework.py report generate --no-open
+open reports/automation-report/index.html
+```
+
+Generate optional official Allure output only when you need it:
+
+```bash
+python framework.py report generate --report-kind allure --no-open
+python framework.py report generate --report-kind both --no-open
+```

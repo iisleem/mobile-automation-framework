@@ -43,7 +43,11 @@ def _is_interactive(tag: str, attrs: dict[str, str], platform: str) -> bool:
         return False
     if attrs.get("clickable") == "true":
         return True
-    if attrs.get("enabled") == "true" and attrs.get("focusable") == "true" and _looks_like_control(normalized, platform):
+    if (
+        attrs.get("enabled") == "true"
+        and attrs.get("focusable") == "true"
+        and _looks_like_control(normalized, platform)
+    ):
         return True
     if platform == "ios":
         return _looks_like_control(normalized, platform)

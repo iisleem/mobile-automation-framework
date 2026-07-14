@@ -32,18 +32,13 @@ def is_appium_server_ready(server_url: str, timeout_seconds: float = 2.0) -> boo
 
 
 def describe_capabilities(capabilities: dict[str, Any]) -> str:
-    safe_capabilities = {
-        key: ("***" if _looks_secret(key) else value)
-        for key, value in sorted(capabilities.items())
-    }
+    safe_capabilities = {key: ("***" if _looks_secret(key) else value) for key, value in sorted(capabilities.items())}
     return "\n".join(f"{key}: {value}" for key, value in safe_capabilities.items())
 
 
 def _resolve_option_class(capabilities: dict[str, Any]):
     platform_name = str(capabilities.get("platformName", "")).lower()
-    automation_name = str(
-        capabilities.get("appium:automationName", capabilities.get("automationName", ""))
-    ).lower()
+    automation_name = str(capabilities.get("appium:automationName", capabilities.get("automationName", ""))).lower()
 
     if platform_name == "android" and automation_name == "uiautomator2":
         try:

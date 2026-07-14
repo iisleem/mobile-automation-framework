@@ -131,10 +131,33 @@ python framework.py report generate
 python framework.py report open
 ```
 
-If the Allure CLI is not installed, the framework generates a built-in HTML fallback report.
+The default report is the core product report at `reports/automation-report/index.html`. It is
+generated from `reports/allure-results`.
+
+Official Allure HTML is optional:
+
+```bash
+python framework.py report generate --report-kind allure --no-open
+python framework.py report generate --report-kind both --no-open
+```
+
+In `both` mode, a missing or failing Allure CLI produces a warning while the core product report
+still succeeds.
 
 ## GitHub Actions Does Not Run Device Tests
 
 The default CI workflow runs helper/unit tests and static checks only. Real Android/iOS runs need
 Appium, emulators or simulators, Xcode for iOS, and device-specific setup. Run device examples
 locally or add a self-hosted runner when you want pipeline device execution.
+
+## iOS Doctor Warns About simctl
+
+If full Xcode is installed but `xcode-select -p` points to Command Line Tools, `framework.py doctor`
+may warn that `simctl` is unavailable. For one command, prefix the run with:
+
+```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer python framework.py run --ios-example --profile ios_the_app
+```
+
+When the whole machine should use full Xcode for iOS automation, select it with `xcode-select`
+outside the framework process.

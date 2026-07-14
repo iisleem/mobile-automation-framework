@@ -24,6 +24,7 @@ def _run_args(**overrides) -> argparse.Namespace:
         "parallel": None,
         "reruns": None,
         "reruns_delay": None,
+        "report_kind": "core",
         "no_open_report": False,
         "no_generate_report": False,
     }
@@ -80,6 +81,20 @@ def test_framework_cli_can_skip_profile_append_for_single_profile_runs(monkeypat
     )
 
     assert command == ["--profile", "android_the_app"]
+
+
+def test_framework_cli_passes_non_default_report_kind(monkeypatch):
+    monkeypatch.setattr(framework, "_retry_setting", lambda name, default: 0)
+    command: list[str] = []
+
+    framework._append_common_pytest_options(
+        command,
+        _run_args(report_kind="both"),
+        marker_expression=None,
+        extra_pytest_args=[],
+    )
+
+    assert command == ["--report-kind", "both"]
 
 
 def test_device_matrix_applies_default_test_retries_from_settings(monkeypatch, tmp_path):

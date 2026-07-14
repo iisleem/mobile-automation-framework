@@ -21,6 +21,4 @@ def assert_screenshot_matches_baseline(
         baseline.parent.mkdir(parents=True, exist_ok=True)
         baseline.write_bytes(actual.read_bytes())
         return
-    assert actual.read_bytes() == baseline.read_bytes(), (
-        f"Screenshot {actual} does not match baseline {baseline}"
-    )
+    assert actual.read_bytes() == baseline.read_bytes(), f"Screenshot {actual} does not match baseline {baseline}"

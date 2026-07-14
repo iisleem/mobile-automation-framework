@@ -9,7 +9,9 @@ build/
 
 reports/allure-results/*
 reports/allure-report/*
+reports/automation-report/*
 reports/device-matrix/*
+reports/history/*
 screenshots/*
 source_dumps/*
 recordings/*

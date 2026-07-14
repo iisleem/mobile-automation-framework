@@ -52,11 +52,7 @@ def _apply_overrides(
 
 
 def _prune_empty_values(capabilities: dict[str, Any]) -> dict[str, Any]:
-    return {
-        key: value
-        for key, value in capabilities.items()
-        if value is not None and value != ""
-    }
+    return {key: value for key, value in capabilities.items() if value is not None and value != ""}
 
 
 def _resolve_local_app_path(project_root: Path, capabilities: dict[str, Any]) -> None:

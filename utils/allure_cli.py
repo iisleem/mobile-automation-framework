@@ -9,5 +9,5 @@ def get_allure_cli(project_root: Path, logger=None) -> str | None:
     if executable:
         return executable
     if logger:
-        logger.warning("Allure CLI was not found. Built-in HTML report fallback will be used.")
+        logger.warning("Allure CLI was not found. Core product reports remain available; official Allure is optional.")
     return None
