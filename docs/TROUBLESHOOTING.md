@@ -131,7 +131,18 @@ python framework.py report generate
 python framework.py report open
 ```
 
-If the Allure CLI is not installed, the framework generates a built-in HTML fallback report.
+The default report is the core product report at `reports/automation-report/index.html`. It is
+generated from `reports/allure-results`.
+
+Official Allure HTML is optional:
+
+```bash
+python framework.py report generate --report-kind allure --no-open
+python framework.py report generate --report-kind both --no-open
+```
+
+In `both` mode, a missing or failing Allure CLI produces a warning while the core product report
+still succeeds.
 
 ## GitHub Actions Does Not Run Device Tests
 

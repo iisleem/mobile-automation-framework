@@ -11,8 +11,16 @@ from utils.allure_cli import get_allure_cli
 from utils.capabilities import available_profiles
 from utils.config_reader import ConfigReader
 from utils.logger import get_logger
-from utils.report_generator import generate_html_report
 from utils.report_opener import open_report
+from utils.reporting import (
+    DEFAULT_OUTPUT_DIR,
+    DEFAULT_REPORT_KIND,
+    DEFAULT_RESULTS_DIR,
+    REPORT_KIND_CHOICES,
+    finalize_mobile_report,
+    preferred_report_path,
+    reporting_result_lines,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -94,16 +102,30 @@ def _build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--hybrid-example", action="store_true", help="Run the hybrid demo app example.")
     run_parser.add_argument("--reruns", help="Retry failed tests.")
     run_parser.add_argument("--reruns-delay", help="Delay between retries.")
+    run_parser.add_argument(
+        "--report-kind",
+        choices=REPORT_KIND_CHOICES,
+        default=DEFAULT_REPORT_KIND,
+        help="Post-run report kind: core, allure, both, or summary. Defaults to core.",
+    )
     run_parser.add_argument("--no-open-report", action="store_true", help="Do not open generated reports.")
     run_parser.add_argument("--no-generate-report", action="store_true", help="Do not generate a post-run report.")
 
     report_parser = subparsers.add_parser("report", help="Generate or open reports.")
     report_subparsers = report_parser.add_subparsers(dest="report_command", required=True)
     report_open = report_subparsers.add_parser("open", help="Open the latest generated report.")
-    report_open.add_argument("--type", choices=("auto", "matrix", "allure"), default="auto")
+    report_open.add_argument("--type", choices=("auto", "core", "matrix", "summary", "allure"), default="auto")
     report_generate = report_subparsers.add_parser("generate", help="Generate a report from Allure results.")
-    report_generate.add_argument("--results", default="reports/allure-results")
-    report_generate.add_argument("--output", default="reports/allure-report")
+    report_generate.add_argument("--results", default=str(DEFAULT_RESULTS_DIR))
+    report_generate.add_argument("--output", default=str(DEFAULT_OUTPUT_DIR))
+    report_generate.add_argument(
+        "--report-kind",
+        choices=REPORT_KIND_CHOICES,
+        default=DEFAULT_REPORT_KIND,
+        help="Report kind: core, allure, both, or summary. Defaults to core.",
+    )
+    report_generate.add_argument("--env", default="qa", help="Environment metadata for the generated report.")
+    report_generate.add_argument("--profile", help="Capability profile metadata for the generated report.")
     report_generate.add_argument("--no-open", action="store_true")
 
     helpers_parser = subparsers.add_parser("helpers", help="Open helper documentation.")
@@ -184,6 +206,8 @@ def _append_common_pytest_options(
         command.extend(["--reruns", str(reruns)])
     if float(reruns_delay):
         command.extend(["--reruns-delay", str(reruns_delay)])
+    if args.report_kind != DEFAULT_REPORT_KIND:
+        command.extend(["--report-kind", args.report_kind])
     if args.no_open_report:
         command.append("--no-open-report")
     if args.no_generate_report:
@@ -246,23 +270,52 @@ def _handle_report_command(args: argparse.Namespace) -> int:
             return 1
         return 0 if open_report(report_path, LOGGER) else 1
 
-    results_dir = (PROJECT_ROOT / args.results).resolve()
-    output_dir = (PROJECT_ROOT / args.output).resolve()
-    report_path = generate_html_report(results_dir, output_dir)
-    print(f"Generated report: {report_path}")
-    if not args.no_open:
-        open_report(report_path, LOGGER)
-    return 0
+    profile_name = args.profile or ConfigReader(PROJECT_ROOT).read_settings()["execution"]["default_profile"]
+    result = finalize_mobile_report(
+        project_root=PROJECT_ROOT,
+        results_dir=args.results,
+        output_dir=args.output,
+        report_kind=args.report_kind,
+        open_report=not args.no_open,
+        env_name=args.env,
+        profile_name=profile_name,
+        capabilities=_report_capabilities(profile_name),
+        logger=LOGGER,
+    )
+    for line in reporting_result_lines(result):
+        print(line)
+    report_path = preferred_report_path(result)
+    if report_path:
+        print(f"Primary report: {report_path}")
+    return 0 if result.ok else 1
 
 
 def _find_report(report_type: str) -> Path | None:
     candidates: list[Path] = []
+    if report_type in {"auto", "core", "summary"}:
+        candidates.append(PROJECT_ROOT / DEFAULT_OUTPUT_DIR / "index.html")
     if report_type in {"auto", "matrix"}:
         candidates.append(PROJECT_ROOT / "reports" / "device-matrix" / "index.html")
-    if report_type in {"auto", "allure"}:
-        candidates.append(PROJECT_ROOT / "reports" / "allure-report" / "index.html")
+    if report_type == "allure":
+        candidates.extend(
+            [
+                PROJECT_ROOT / DEFAULT_OUTPUT_DIR / "allure" / "index.html",
+                PROJECT_ROOT / "reports" / "allure-report" / "index.html",
+            ]
+        )
     existing = [path for path in candidates if path.exists()]
     return max(existing, key=lambda path: path.stat().st_mtime) if existing else None
+
+
+def _report_capabilities(profile_name: str) -> dict:
+    from utils.capabilities import resolve_capabilities
+
+    capabilities_config = ConfigReader(PROJECT_ROOT).read_capabilities()
+    try:
+        return resolve_capabilities(PROJECT_ROOT, capabilities_config, profile_name)
+    except Exception as error:
+        LOGGER.warning("Could not resolve mobile report metadata for profile %s: %s", profile_name, error)
+        return capabilities_config.get("profiles", {}).get(profile_name, {})
 
 
 def _open_helpers_catalog(args: argparse.Namespace) -> int:
@@ -336,7 +389,7 @@ def _check_yaml_config(doctor: Doctor) -> None:
 
 
 def _check_python_dependencies(doctor: Doctor) -> None:
-    for module in ("pytest", "yaml", "requests", "selenium", "appium"):
+    for module in ("pytest", "yaml", "requests", "selenium", "appium", "automation_core"):
         if importlib.util.find_spec(module):
             doctor.pass_(f"Python dependency importable: {module}")
         else:
@@ -391,7 +444,7 @@ def _check_allure(doctor: Doctor) -> None:
     if get_allure_cli(PROJECT_ROOT, LOGGER):
         doctor.pass_("Allure CLI available.")
     else:
-        doctor.warn("Allure CLI not found. Built-in HTML report fallback is available.")
+        doctor.warn("Allure CLI not found. Core product reports are available by default; official Allure is optional.")
 
 
 def _run_command(command: list[str]) -> int:

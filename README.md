@@ -4,13 +4,13 @@
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![Appium](https://img.shields.io/badge/mobile-Appium-662D91.svg)](https://appium.io/)
 [![Pytest](https://img.shields.io/badge/tested%20with-pytest-0A9EDC.svg)](https://pytest.org/)
-[![Allure](https://img.shields.io/badge/reports-Allure-orange.svg)](https://allurereport.org/)
+[![Reports](https://img.shields.io/badge/reports-core%20product-2563EB.svg)](https://github.com/iisleem/automation-core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Standalone Python mobile automation framework for Android and iOS native, hybrid, and mobile
 web experiences. It uses Appium 2, Pytest, Screen Object Model, reusable flows, capability
-profiles, failure artifacts, Allure-compatible reporting, and a helper library focused on real
-mobile automation work.
+profiles, failure artifacts, core product reporting from Allure-compatible results, and a helper
+library focused on real mobile automation work.
 
 This repo is intentionally independent from any web automation framework. Shared utilities such
 as API setup, polling, files, and test data are included only because they are useful in mobile
@@ -27,7 +27,8 @@ test setup, cleanup, and assertions.
 - CLI overrides for profile, Appium server, app path, device name, platform version, UDID, reset behavior, markers, retries, and parallel execution
 - Device/profile matrix execution with an HTML dashboard
 - Screenshots, page source dumps, Appium logs, and optional screen recordings on failed tests
-- Allure report generation when the Allure CLI exists, with a built-in HTML fallback
+- Core product report generation by default at `reports/automation-report/index.html`
+- Optional official Allure report generation with `--report-kind allure` or `--report-kind both`
 - Self-healing locator fallback support in `BaseScreen`
 - Action-level retries with post-action verification for mobile-sensitive actions
 - iOS keyboard typing helper for secure fields and simulator keyboard-sensitive inputs
@@ -67,7 +68,8 @@ mobile-automation-framework/
 │   ├── helpers/                  # Reusable mobile automation helper library
 │   ├── capabilities.py           # Capability profile resolver
 │   ├── mobile_driver.py          # Appium driver factory
-│   ├── report_generator.py       # Built-in HTML reports and matrix dashboard
+│   ├── reporting.py              # Mobile adapter for automation-core reporting
+│   ├── report_generator.py       # Matrix dashboard and legacy summary helpers
 │   └── artifact_helper.py        # Failure screenshots, logs, source dumps, recordings
 ├── scripts/
 │   ├── download_sample_apps.py   # Downloads TheApp Android/iOS fixtures
@@ -145,10 +147,14 @@ pip install -r requirements.txt -r requirements-dev.txt
 python -m compileall -q framework.py conftest.py screens flows utils scripts tests templates
 ruff check .
 python framework.py run --helpers --no-open-report --no-generate-report
+python framework.py report generate --no-open
 ```
 
 Device examples require Appium and a prepared emulator, simulator, or real device. The helper suite
 is intentionally device-free so CI can validate framework behavior quickly.
+
+The report smoke command writes the default core product report to
+`reports/automation-report/index.html`.
 
 ## Run The Android Example
 
@@ -273,9 +279,14 @@ Open reports and docs:
 ```bash
 python framework.py report open
 python framework.py report generate
+python framework.py report generate --report-kind both --no-open
 python framework.py helpers
 python framework.py helpers --guide
 ```
+
+`--report-kind` accepts `core`, `allure`, `both`, or `summary`. The default is `core`, which reads
+`reports/allure-results` and writes `reports/automation-report/index.html`. Official Allure HTML is
+optional and is generated only when explicitly requested.
 
 For the web-to-mobile concept comparison, see `docs/FEATURE_PARITY.md`.
 For more examples, see `docs/EXAMPLES.md`.

@@ -14,7 +14,7 @@ mobile automation problem.
 | Test-case retry | Supported | `retries.default` and `retries.delay_seconds` are applied by the main CLI and device matrix runner. |
 | Action-level retry | Supported | `BaseScreen.tap`, `type_text`, and `type_text_with_keyboard` retry mobile actions before the next step runs. |
 | Post-action verification | Supported | Taps can verify a locator or callback, and text entry verifies that the field value changed. |
-| Reports | Supported | Allure results, generated Allure report when available, and built-in HTML fallback. |
+| Reports | Supported | Core product report is the default at `reports/automation-report/index.html`; official Allure is optional via `--report-kind allure` or `--report-kind both`. |
 | Failure artifacts | Supported | Screenshots, page source dumps, logs, and optional recordings on failed tests. |
 | Screen Object Model | Supported | Mobile tests use `screens/` and `flows/` instead of web pages. |
 | Self-healing locators | Supported | Engineer-defined fallback locators through `locator_with_fallbacks`; no runtime selector invention. |
@@ -24,6 +24,16 @@ mobile automation problem.
 | Mobile web | Supported | Appium Chrome/Safari profiles and a runnable mobile web smoke example. |
 | Profile matrix | Supported | `scripts/run_device_matrix.py` runs one pytest suite per capability profile and builds a dashboard. |
 | Helper catalog | Supported | `docs/FRAMEWORK_HELPERS.md` and `docs/helpers_catalog.html` document reusable helpers. |
+
+## Reporting Modes
+
+The post-run report flow reads `reports/allure-results` and generates the shared core product
+report by default. Use `--report-kind core|allure|both|summary` from `framework.py run`,
+`framework.py report generate`, or `scripts/generate_allure_report.py` to choose another mode.
+
+`both` keeps the core product report as the primary output and attempts official Allure HTML as an
+optional extra. If the Allure CLI is missing or fails in `both` mode, the successful core report is
+kept and the run is not failed because of official Allure generation.
 
 ## Mobile-Specific Helper Coverage
 
