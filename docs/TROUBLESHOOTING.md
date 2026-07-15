@@ -178,9 +178,10 @@ python framework.py report generate
 python framework.py report open
 ```
 
-The default report is the core product report at `reports/automation-report/index.html`. It is
-generated from `reports/allure-results` together with
-`reports/automation-report/report-data.json`.
+The default report is the retained-run core product portfolio at `reports/automation-report/index.html`.
+It is generated from `reports/allure-results`, exposes run selection at
+`reports/automation-report/reports.html`, and keeps each run's structured data under
+`reports/automation-report/runs/<timestamp>-<run-id>/`.
 
 Official Allure HTML is optional:
 

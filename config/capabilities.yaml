@@ -5,6 +5,7 @@ profiles:
     appium:deviceName: "Android Emulator"
     appium:app: "apps/TheApp.apk"
     appium:autoGrantPermissions: true
+    appium:uiautomator2ServerLaunchTimeout: 60000
     appium:newCommandTimeout: 120
     appium:noReset: false
 
@@ -30,6 +31,7 @@ profiles:
     appium:autoGrantPermissions: true
     appium:chromedriverAutodownload: true
     appium:ensureWebviewsHavePages: true
+    appium:uiautomator2ServerLaunchTimeout: 60000
     appium:newCommandTimeout: 120
     appium:noReset: false
 
@@ -60,6 +62,7 @@ profiles:
     appium:automationName: UiAutomator2
     appium:deviceName: "Android Emulator"
     appium:chromedriverAutodownload: true
+    appium:uiautomator2ServerLaunchTimeout: 60000
     appium:newCommandTimeout: 120
     appium:noReset: true
 
