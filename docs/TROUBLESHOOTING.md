@@ -104,6 +104,24 @@ Use `BaseScreen.type_text_with_keyboard(..., sensitive=True)` for secure fields 
 normal `send_keys` returns without changing the field value. The iOS profiles also disable hardware
 keyboard mode and force the simulator software keyboard.
 
+## Runtime Healing Did Not Apply A Candidate
+
+Runtime healing is disabled by default. Check `config/settings.yaml`:
+
+```yaml
+runtime_healing:
+  mode: suggest   # disabled | suggest | apply
+```
+
+`suggest` mode never taps, types, or applies candidates; it only writes audit events to
+`reports/healing/events.jsonl`. In `apply` mode the candidate still has to pass the core score,
+ambiguity, allow/deny pattern, and allowed-action gates. If healing is rejected, the original action
+fails with the healing decision and reason in the error message.
+
+Use the audit file and `reports/automation-report/index.html` to review candidate scores before
+raising thresholds or enabling apply mode in more suites. For hybrid and mobile web tests, confirm
+the session is already in the intended context; runtime healing does not force context switches.
+
 ## Sample Apps Are Missing
 
 The native examples download TheApp automatically when the fixture is missing. You can download

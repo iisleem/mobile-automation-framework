@@ -166,7 +166,7 @@ self.tap(self.login_button, "Login", verify=self.logged_in_message)
 ## Self-Healing Locators
 
 Self-healing is supported through engineer-defined locator fallbacks, the same conservative model
-used by the web framework. The framework does not invent selectors automatically at runtime.
+used by the web framework.
 
 ```python
 self.locator_with_fallbacks(
@@ -175,3 +175,8 @@ self.locator_with_fallbacks(
     (AppiumBy.XPATH, "//*[@name='loginBtn' or @resource-id='loginBtn']"),
 )
 ```
+
+Runtime auto-healing is a separate source-based adapter and is disabled by default. Enable
+`runtime_healing.mode: suggest` to audit ranked candidates without applying them, or `apply` only
+after reviewing the audit trail and allowed actions. Audit events are written to
+`reports/healing/events.jsonl`.

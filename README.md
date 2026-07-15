@@ -443,8 +443,24 @@ self.locator_with_fallbacks(
 )
 ```
 
-This matches the web framework concept: it is engineer-defined fallback healing, not
-runtime-generated locator healing that invents selectors during a test run.
+Runtime auto-healing is available as an audited adapter over `automation-core`, but it is disabled
+by default. In `suggest` mode the framework records ranked source-based candidates without applying
+them. In `apply` mode it can use a candidate only when the core decision is `applied` and the mobile
+safety gates pass.
+
+```yaml
+runtime_healing:
+  mode: disabled        # disabled | suggest | apply
+  min_score: 0.78
+  ambiguity_delta: 0.05
+  allowed_actions: [tap, type_text, type_text_with_keyboard, find]
+  audit_path: reports/healing/events.jsonl
+```
+
+Candidate discovery is Appium-owned and uses current native or webview page source signals such as
+accessibility labels, resource ids, text, class/type, hierarchy, and context. It does not force
+context switches. Every attempt is written to the audit path and included in the core product report
+metadata when matching test results are available.
 
 ## CI And Reports
 

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
+import json
 from pathlib import Path
 from typing import Any
 
+from automation_core.healing import add_healing_result
 from automation_core.reporting import ReportingFinalizeResult, finalize_allure_reporting
 
 
@@ -12,6 +14,7 @@ REPORT_KIND_CHOICES = ("core", "allure", "both", "summary")
 DEFAULT_RESULTS_DIR = Path("reports") / "allure-results"
 DEFAULT_OUTPUT_DIR = Path("reports") / "automation-report"
 DEFAULT_HISTORY_DIR = Path("reports") / "history"
+DEFAULT_HEALING_AUDIT_PATH = Path("reports") / "healing" / "events.jsonl"
 PROJECT_NAME = "mobile-automation-framework"
 FRAMEWORK_NAME = "pytest-appium"
 MOBILE_MATRIX_DIMENSIONS = ["environment", "profile", "platform", "platform_version", "device_name", "context"]
@@ -53,7 +56,10 @@ def finalize_mobile_report(
         open_target="auto",
         missing_ok=missing_ok,
         metadata=mobile_metadata["run"],
-        enrichers=[_mobile_report_enricher(mobile_metadata["test"])],
+        enrichers=[
+            _mobile_report_enricher(mobile_metadata["test"]),
+            _healing_report_enricher(project_root / DEFAULT_HEALING_AUDIT_PATH),
+        ],
         matrix_dimensions=MOBILE_MATRIX_DIMENSIONS,
     )
 
@@ -149,6 +155,84 @@ def _mobile_report_enricher(metadata: dict[str, Any]) -> Callable[[Any], Any]:
         return report
 
     return enrich
+
+
+def _healing_report_enricher(audit_path: Path) -> Callable[[Any], Any]:
+    def enrich(report: Any) -> Any:
+        events = _read_healing_events(audit_path)
+        if not events:
+            return report
+        unmatched = []
+        for event in events:
+            if not _attach_healing_event(report, event):
+                unmatched.append(event)
+        if unmatched and isinstance(getattr(report, "metadata", None), dict):
+            report.metadata.setdefault("healing_events", []).extend(unmatched)
+            report.metadata["healing_attempt_count"] = len(events)
+        return report
+
+    return enrich
+
+
+def _attach_healing_event(report: Any, event: dict[str, Any]) -> bool:
+    event_test_id = str(event.get("test_id") or "")
+    tests = list(getattr(report, "tests", []))
+    for test in tests:
+        if _healing_event_matches_test(event_test_id, test):
+            add_healing_result(test, _HealingResultPayload(event))
+            return True
+    if event_test_id:
+        return False
+    if len(tests) == 1:
+        add_healing_result(tests[0], _HealingResultPayload(event))
+        return True
+    return False
+
+
+def _healing_event_matches_test(event_test_id: str, test: Any) -> bool:
+    if not event_test_id:
+        return False
+    candidates = {
+        str(getattr(test, "id", "")),
+        str(getattr(test, "name", "")),
+        str(getattr(test, "full_name", "")),
+        str(getattr(test, "fullName", "")),
+    }
+    normalized_event = _normalize_test_id(event_test_id)
+    return any(normalized_event in _normalize_test_id(candidate) for candidate in candidates if candidate)
+
+
+def _read_healing_events(audit_path: Path) -> list[dict[str, Any]]:
+    if not audit_path.exists():
+        return []
+    events: list[dict[str, Any]] = []
+    with audit_path.open("r", encoding="utf-8") as file:
+        for line in file:
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(event, dict):
+                events.append(event)
+    return events
+
+
+def _normalize_test_id(value: str) -> str:
+    return value.replace(".py", "").replace("::", ".").replace("/", ".").replace("\\", ".").lower()
+
+
+class _HealingResultPayload:
+    def __init__(self, payload: dict[str, Any]) -> None:
+        self._payload = payload
+
+    @property
+    def applied(self) -> bool:
+        return str(self._payload.get("decision", "")).lower() == "applied"
+
+    def to_dict(self) -> dict[str, Any]:
+        return self._payload
 
 
 def _mobile_context(profile_name: str, capabilities: Mapping[str, Any]) -> str:
