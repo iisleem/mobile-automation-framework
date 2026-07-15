@@ -27,7 +27,7 @@ test setup, cleanup, and assertions.
 - CLI overrides for profile, Appium server, app path, device name, platform version, UDID, reset behavior, markers, retries, and parallel execution
 - Device/profile matrix execution with an HTML dashboard
 - Screenshots, page source dumps, Appium logs, and optional screen recordings on failed tests
-- Core product report generation by default at `reports/automation-report/index.html`
+- Core product report generation by default at `reports/automation-report/index.html` with `reports/automation-report/report-data.json`
 - Optional official Allure report generation with `--report-kind allure` or `--report-kind both`
 - Self-healing locator fallback support in `BaseScreen`
 - Action-level retries with post-action verification for mobile-sensitive actions
@@ -157,7 +157,8 @@ Device examples require Appium and a prepared emulator, simulator, or real devic
 is intentionally device-free so CI can validate framework behavior quickly.
 
 The report smoke command writes the default core product report to
-`reports/automation-report/index.html`.
+`reports/automation-report/index.html` and its structured sidecar data to
+`reports/automation-report/report-data.json`.
 
 For a first-run guide with report screenshots, sample commands, artifact paths, and a real Android
 run artifact, see
@@ -302,8 +303,9 @@ python framework.py helpers --guide
 ```
 
 `--report-kind` accepts `core`, `allure`, `both`, or `summary`. The default is `core`, which reads
-`reports/allure-results` and writes `reports/automation-report/index.html`. Official Allure HTML is
-optional and is generated only when explicitly requested.
+`reports/allure-results` and writes `reports/automation-report/index.html` plus
+`reports/automation-report/report-data.json`. Official Allure HTML is optional and is generated only
+when explicitly requested.
 
 For the web-to-mobile concept comparison, see `docs/FEATURE_PARITY.md`.
 For more examples, see `docs/EXAMPLES.md`.

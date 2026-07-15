@@ -14,7 +14,7 @@ mobile automation problem.
 | Test-case retry | Supported | `retries.default` and `retries.delay_seconds` are applied by the main CLI and device matrix runner. |
 | Action-level retry | Supported | `BaseScreen.tap`, `type_text`, and `type_text_with_keyboard` retry mobile actions before the next step runs. |
 | Post-action verification | Supported | Taps can verify a locator or callback, and text entry verifies that the field value changed. |
-| Reports | Supported | Core product report is the default at `reports/automation-report/index.html`; official Allure is optional via `--report-kind allure` or `--report-kind both`. |
+| Reports | Supported | Core product report is the default at `reports/automation-report/index.html` with structured data at `reports/automation-report/report-data.json`; official Allure is optional via `--report-kind allure` or `--report-kind both`. |
 | Failure artifacts | Supported | Screenshots, page source dumps, logs, and optional recordings on failed tests. |
 | Screen Object Model | Supported | Mobile tests use `screens/` and `flows/` instead of web pages. |
 | Self-healing locators | Supported | Engineer-defined fallback locators through `locator_with_fallbacks`. |
@@ -32,6 +32,8 @@ mobile automation problem.
 The post-run report flow reads `reports/allure-results` and generates the shared core product
 report by default. Use `--report-kind core|allure|both|summary` from `framework.py run`,
 `framework.py report generate`, or `scripts/generate_allure_report.py` to choose another mode.
+Generated core reports include `reports/automation-report/index.html` and
+`reports/automation-report/report-data.json`.
 
 `both` keeps the core product report as the primary output and attempts official Allure HTML as an
 optional extra. If the Allure CLI is missing or fails in `both` mode, the successful core report is

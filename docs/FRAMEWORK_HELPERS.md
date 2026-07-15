@@ -50,8 +50,9 @@ mobile-owned.
 ## Gestures
 
 Allure debug attachments are written into `reports/allure-results`. The default framework report
-then turns those results into the core product report at `reports/automation-report/index.html`;
-official Allure HTML remains optional through `--report-kind allure` or `--report-kind both`.
+then turns those results into the core product report at `reports/automation-report/index.html`
+with structured sidecar data at `reports/automation-report/report-data.json`; official Allure HTML
+remains optional through `--report-kind allure` or `--report-kind both`.
 
 ```python
 from utils.helpers.gestures import GestureHelper

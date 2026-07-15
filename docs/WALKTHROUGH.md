@@ -30,7 +30,8 @@ python framework.py report generate --no-open
 The default report is the automation-core product report. It summarizes the run, profiles,
 environments, devices, pass rate, slow tests, failure summary, and history trends. Open
 `reports/automation-report/index.html` locally after generation, or omit `--no-open` when you want
-the CLI to open the report automatically.
+the CLI to open the report automatically. The same generation writes
+`reports/automation-report/report-data.json` for structured run summary, timeline, and signal data.
 
 Use the dashboard to check run status first, then drill into test details for step timing, action
 attempts, retry notes, and artifact links. The raw result stream remains in `reports/allure-results`
@@ -130,6 +131,7 @@ back to native before checking native navigation or system UI.
 The default artifact locations are:
 
 - `reports/automation-report/index.html` for the core product report.
+- `reports/automation-report/report-data.json` for structured report data.
 - `reports/allure-results` for raw test result files and attachments.
 - `screenshots` for failure screenshots.
 - `source_dumps` for page source captured on failure.
