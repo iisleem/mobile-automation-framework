@@ -7,6 +7,7 @@ from typing import Any
 
 from automation_core.healing import add_healing_result
 from automation_core.reporting import ReportingFinalizeResult, finalize_allure_reporting
+from utils.healing import healing_audit_path
 
 
 DEFAULT_REPORT_KIND = "core"
@@ -30,6 +31,7 @@ def finalize_mobile_report(
     env_name: str = "",
     profile_name: str = "",
     capabilities: Mapping[str, Any] | None = None,
+    settings: Mapping[str, Any] | None = None,
     history_dir: str | Path | None = DEFAULT_HISTORY_DIR,
     missing_ok: bool = True,
     logger=None,
@@ -44,6 +46,7 @@ def finalize_mobile_report(
         profile_name=profile_name,
         capabilities=capabilities or {},
     )
+    healing_path = healing_audit_path(project_root, dict(settings or {}))
 
     return finalize_allure_reporting(
         results_path,
@@ -58,7 +61,7 @@ def finalize_mobile_report(
         metadata=mobile_metadata["run"],
         enrichers=[
             _mobile_report_enricher(mobile_metadata["test"]),
-            _healing_report_enricher(project_root / DEFAULT_HEALING_AUDIT_PATH),
+            _healing_report_enricher(healing_path),
         ],
         matrix_dimensions=MOBILE_MATRIX_DIMENSIONS,
     )

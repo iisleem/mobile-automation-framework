@@ -271,7 +271,8 @@ def _handle_report_command(args: argparse.Namespace) -> int:
             return 1
         return 0 if open_report(report_path, LOGGER) else 1
 
-    profile_name = args.profile or ConfigReader(PROJECT_ROOT).read_settings()["execution"]["default_profile"]
+    settings = ConfigReader(PROJECT_ROOT).read_settings()
+    profile_name = args.profile or settings["execution"]["default_profile"]
     result = finalize_mobile_report(
         project_root=PROJECT_ROOT,
         results_dir=args.results,
@@ -281,6 +282,7 @@ def _handle_report_command(args: argparse.Namespace) -> int:
         env_name=args.env,
         profile_name=profile_name,
         capabilities=_report_capabilities(profile_name),
+        settings=settings,
         logger=LOGGER,
     )
     for line in reporting_result_lines(result):

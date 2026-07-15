@@ -112,6 +112,29 @@ def test_native_source_candidate_extraction_uses_mobile_signals():
     assert all(candidate.descriptor.metadata["context"] == "NATIVE_APP" for candidate in candidates)
 
 
+def test_android_native_text_candidate_uses_uiautomator():
+    driver = _HealingDriver(_native_source(text="Sign in"), platform_name="Android")
+    original = SimpleNamespace(by=AppiumBy.ACCESSIBILITY_ID, value="oldLogin", description="Login button")
+
+    candidates = discover_mobile_candidates(driver, original, action="tap", max_candidates=10)
+
+    assert any(candidate.by == AppiumBy.ANDROID_UIAUTOMATOR for candidate in candidates)
+    assert any('new UiSelector().text("Sign in")' == candidate.value for candidate in candidates)
+
+
+def test_ios_native_text_candidate_does_not_use_android_uiautomator():
+    driver = _HealingDriver(_ios_native_source(label="Sign in", value="Sign in"), platform_name="iOS")
+    original = SimpleNamespace(by=AppiumBy.ACCESSIBILITY_ID, value="oldLogin", description="Login button")
+
+    candidates = discover_mobile_candidates(driver, original, action="tap", max_candidates=10)
+
+    assert all(candidate.by != AppiumBy.ANDROID_UIAUTOMATOR for candidate in candidates)
+    assert any(candidate.by == AppiumBy.ACCESSIBILITY_ID and candidate.value == "Sign in" for candidate in candidates)
+    assert any(
+        candidate.by == AppiumBy.IOS_PREDICATE and "value == 'Sign in'" in candidate.value for candidate in candidates
+    )
+
+
 def test_healing_report_enricher_uses_core_add_result(tmp_path):
     audit_path = tmp_path / "reports" / "healing" / "events.jsonl"
     audit_path.parent.mkdir(parents=True)
@@ -139,6 +162,59 @@ def test_healing_report_enricher_uses_core_add_result(tmp_path):
     assert test.metadata["healing_attempt_count"] == 1
     assert test.metadata["healing_applied_count"] == 1
     assert test.metadata["healing_events"][0]["decision"] == "applied"
+
+
+def test_finalize_mobile_report_uses_configured_healing_audit_path(monkeypatch, tmp_path):
+    custom_audit = tmp_path / "custom" / "healing.jsonl"
+    captured: dict = {}
+
+    def fake_finalize(*args, **kwargs):
+        report = SimpleNamespace(
+            tests=[
+                SimpleNamespace(
+                    id="",
+                    name="test_example",
+                    full_name="tests.helpers.test_runtime_healing.test_example",
+                    metadata={},
+                    domain="",
+                    profile="",
+                    environment="",
+                    capabilities={},
+                )
+            ],
+            metadata={},
+        )
+        for enricher in kwargs["enrichers"]:
+            enricher(report)
+        captured["report"] = report
+        return SimpleNamespace(
+            report_kind="core",
+            core=SimpleNamespace(requested=True, generated=True, path=str(tmp_path / "index.html")),
+            summary=SimpleNamespace(requested=False, generated=False, path=None),
+            allure=SimpleNamespace(requested=False, generated=False, path=None),
+            warnings=[],
+            errors=[],
+            opened_path=None,
+            ok=True,
+        )
+
+    custom_audit.parent.mkdir(parents=True)
+    custom_audit.write_text(
+        json.dumps({"decision": "applied", "test_id": "tests/helpers/test_runtime_healing.py::test_example"}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("utils.reporting.finalize_allure_reporting", fake_finalize)
+
+    from utils.reporting import finalize_mobile_report
+
+    finalize_mobile_report(
+        project_root=tmp_path,
+        settings={"runtime_healing": {"audit_path": str(custom_audit)}},
+    )
+
+    test = captured["report"].tests[0]
+    assert test.metadata["healing_attempt_count"] == 1
+    assert test.metadata["healing_applied_count"] == 1
 
 
 def _settings(tmp_path, *, mode: str, min_score: float) -> dict:
@@ -169,4 +245,12 @@ def _node(*, content_desc: str = "", resource_id: str = "", text: str = "") -> s
     return (
         '<node class="android.widget.Button" clickable="true" enabled="true" '
         f'text="{text}" content-desc="{content_desc}" resource-id="{resource_id}" />'
+    )
+
+
+def _ios_native_source(*, label: str = "", name: str = "", value: str = "") -> str:
+    return (
+        "<AppiumAUT>"
+        f'<XCUIElementTypeButton type="XCUIElementTypeButton" label="{label}" name="{name}" value="{value}" />'
+        "</AppiumAUT>"
     )

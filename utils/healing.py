@@ -83,11 +83,19 @@ def discover_mobile_candidates(
 ) -> list[MobileHealingCandidate]:
     context = _current_context(driver)
     source = _page_source(driver)
+    platform_name = str(getattr(driver, "capabilities", {}).get("platformName", "")).lower()
     if not source:
         return []
     if _is_web_context(context):
         return _discover_web_candidates(source, original, action=action, context=context, max_candidates=max_candidates)
-    return _discover_native_candidates(source, original, action=action, context=context, max_candidates=max_candidates)
+    return _discover_native_candidates(
+        source,
+        original,
+        action=action,
+        context=context,
+        platform_name=platform_name,
+        max_candidates=max_candidates,
+    )
 
 
 def evaluate_mobile_healing(
@@ -139,6 +147,7 @@ def _discover_native_candidates(
     *,
     action: str,
     context: str,
+    platform_name: str,
     max_candidates: int,
 ) -> list[MobileHealingCandidate]:
     try:
@@ -152,7 +161,7 @@ def _discover_native_candidates(
         attributes = {str(key): str(value) for key, value in node.attrib.items() if value not in ("", "false", "False")}
         tag = _node_type(node, attributes)
         label = _best_label(attributes)
-        raw_candidates = _native_locator_values(attributes)
+        raw_candidates = _native_locator_values(attributes, platform_name=platform_name)
         for by, value, strategy, signal_name in raw_candidates:
             key = (by, value)
             seen[key] = seen.get(key, 0) + 1
@@ -223,18 +232,28 @@ def _discover_web_candidates(
     return _dedupe_candidates(_mark_uniqueness(candidates, seen))[:max_candidates]
 
 
-def _native_locator_values(attributes: dict[str, str]) -> list[tuple[str, str, str, str]]:
+def _native_locator_values(attributes: dict[str, str], *, platform_name: str) -> list[tuple[str, str, str, str]]:
     values: list[tuple[str, str, str, str]] = []
     for key in ("content-desc", "name", "label"):
         if attributes.get(key):
             values.append((AppiumBy.ACCESSIBILITY_ID, attributes[key], AppiumBy.ACCESSIBILITY_ID, "accessibility"))
     resource_id = attributes.get("resource-id")
-    if resource_id:
+    if resource_id and platform_name == "android":
         values.append((AppiumBy.ID, resource_id, AppiumBy.ID, "stable_id"))
     text = attributes.get("text") or attributes.get("value")
-    if text:
+    if text and platform_name == "android":
         escaped = text.replace('"', '\\"')
         values.append((AppiumBy.ANDROID_UIAUTOMATOR, f'new UiSelector().text("{escaped}")', "text", "text"))
+    if text and platform_name == "ios":
+        escaped = _ios_predicate_escape(text)
+        values.append(
+            (
+                AppiumBy.IOS_PREDICATE,
+                f"label == '{escaped}' OR name == '{escaped}' OR value == '{escaped}'",
+                AppiumBy.IOS_PREDICATE,
+                "text",
+            )
+        )
     return values
 
 
@@ -341,6 +360,10 @@ def _normalize(value: str) -> str:
 
 def _css_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\\"').replace("#", "\\#")
+
+
+def _ios_predicate_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("'", "\\'")
 
 
 def _string_tuple(value: Any) -> tuple[str, ...]:
