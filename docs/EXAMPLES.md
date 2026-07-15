@@ -123,8 +123,8 @@ python framework.py report generate --no-open
 open reports/automation-report/index.html
 ```
 
-Core report generation also writes structured report data to
-`reports/automation-report/report-data.json`.
+Core report generation also writes the retained-run gallery to `reports/automation-report/reports.html`
+and structured run data to `reports/automation-report/runs/<timestamp>-<run-id>/report-data.json`.
 
 Generate optional official Allure output only when you need it:
 

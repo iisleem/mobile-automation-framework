@@ -126,6 +126,8 @@ def reporting_result_lines(result: ReportingFinalizeResult) -> list[str]:
             continue
         if status.generated:
             lines.append(f"{label} report generated: {status.path}")
+            if label == "Core" and getattr(status, "run_path", None):
+                lines.append(f"{label} latest run details: {status.run_path}")
         else:
             detail = status.error or "; ".join(status.warnings) or status.status
             lines.append(f"{label} report {status.status}: {detail}")
