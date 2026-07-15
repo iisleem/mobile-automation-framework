@@ -228,6 +228,7 @@ def _generate_profile_report(args: argparse.Namespace, profile: str, results_dir
         env_name=args.env,
         profile_name=profile,
         capabilities=_report_capabilities(profile, args),
+        settings=ConfigReader(PROJECT_ROOT).read_settings(),
         history_dir=PROJECT_ROOT / "reports" / "history" / "device-matrix" / profile,
         logger=LOGGER,
     )

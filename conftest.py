@@ -275,6 +275,7 @@ def _generate_report_after_session(config: pytest.Config, *, open_report: bool) 
         env_name=config.getoption("--env"),
         profile_name=profile_name,
         capabilities=_report_capabilities(config, profile_name),
+        settings=ConfigReader(PROJECT_ROOT).read_settings(),
         logger=LOGGER,
     )
     for line in reporting_result_lines(result):

@@ -135,6 +135,7 @@ The default artifact locations are:
 - `source_dumps` for page source captured on failure.
 - `logs` for device and framework logs.
 - `recordings` for optional video artifacts when recording is enabled.
+- `reports/healing/events.jsonl` for runtime healing audit events when suggest/apply mode is enabled.
 
 The report links back to attachments from the result stream. The filesystem folders are still useful
 when debugging a device locally or attaching one failed attempt to a ticket.

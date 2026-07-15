@@ -39,6 +39,20 @@ self_healing:
   enabled: true
   timeout_ms: 1500
 
+runtime_healing:
+  mode: disabled
+  min_score: 0.78
+  ambiguity_delta: 0.05
+  max_candidates: 10
+  allowed_actions:
+    - tap
+    - type_text
+    - type_text_with_keyboard
+    - find
+  allow_patterns: []
+  deny_patterns: []
+  audit_path: reports/healing/events.jsonl
+
 sample_apps:
   the_app_android_url: "https://github.com/appium-pro/TheApp/releases/download/v1.12.0/TheApp.apk"
   the_app_ios_url: "https://github.com/appium-pro/TheApp/releases/download/v1.12.0/TheApp.app.zip"

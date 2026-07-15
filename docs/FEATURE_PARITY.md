@@ -17,7 +17,8 @@ mobile automation problem.
 | Reports | Supported | Core product report is the default at `reports/automation-report/index.html`; official Allure is optional via `--report-kind allure` or `--report-kind both`. |
 | Failure artifacts | Supported | Screenshots, page source dumps, logs, and optional recordings on failed tests. |
 | Screen Object Model | Supported | Mobile tests use `screens/` and `flows/` instead of web pages. |
-| Self-healing locators | Supported | Engineer-defined fallback locators through `locator_with_fallbacks`; no runtime selector invention. |
+| Self-healing locators | Supported | Engineer-defined fallback locators through `locator_with_fallbacks`. |
+| Runtime auto-healing | Supported, disabled by default | Source-based mobile adapter over `automation-core`; `suggest` audits only, `apply` requires core approval and mobile safety gates. |
 | Android native | Supported | `android_the_app` profile and runnable TheApp example. |
 | iOS native | Supported | `ios_the_app` profile and runnable TheApp example. |
 | Hybrid apps | Supported | `ContextHelper` switches between `NATIVE_APP` and webview contexts; Android WebView and iOS WKWebView samples are included from source. |
@@ -74,15 +75,17 @@ kept and the run is not failed because of official Allure generation.
 | Database helper | Excluded by default. Projects can add it when the product test strategy requires direct DB setup. |
 | Browser PDF/security/performance helpers | Excluded by default because they are browser-centric. Add targeted mobile equivalents only when needed. |
 
-## Self-Healing And Auto-Healing
+## Self-Healing And Runtime Auto-Healing
 
 The web and mobile frameworks both support conservative self-healing: engineers define a primary
 locator and ordered fallbacks. If the primary locator fails, the framework tries the fallback
 locators and logs which fallback was used.
 
-Neither framework currently performs runtime auto-healing that invents new locators during a test
-run. That is a different feature with different risk: it can hide product changes if it is not
-heavily audited.
+Mobile also has a runtime auto-healing adapter over `automation-core`. It is disabled by default.
+`suggest` mode records ranked candidates but never applies them. `apply` mode can use a candidate
+only when the core decision is `applied`, the candidate is unambiguous, the score threshold is met,
+and the action is allowed. Attempts are written to `reports/healing/events.jsonl` and added to core
+report metadata when the event can be matched to a test result.
 
 ## Retry Model
 

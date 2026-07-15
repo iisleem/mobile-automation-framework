@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 import time
@@ -12,6 +13,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from utils.config_reader import ConfigReader
+from utils.healing import (
+    ACTION_FIND,
+    evaluate_mobile_healing,
+    mobile_locator_from_candidate,
+    runtime_healing_enabled,
+    selected_mobile_candidate,
+)
 from utils.helpers.allure_debug import step
 from utils.helpers.device import dismiss_android_system_dialogs
 from utils.helpers.gestures import GestureHelper
@@ -90,11 +98,12 @@ class BaseScreen:
         action_name = f"Tap {description or self._description(locator)}"
 
         def action() -> None:
-            self.dismiss_system_dialogs()
-            resolved = self._resolve(locator)
-            resolved.click()
-            self.dismiss_system_dialogs(timeout_seconds=1.0)
-            self._verify_action_result(action_name, verify)
+            with self._runtime_action("tap"):
+                self.dismiss_system_dialogs()
+                resolved = self._resolve(locator)
+                resolved.click()
+                self.dismiss_system_dialogs(timeout_seconds=1.0)
+                self._verify_action_result(action_name, verify)
 
         with step(action_name):
             self._run_mobile_action(action_name, action)
@@ -110,18 +119,19 @@ class BaseScreen:
         action_name = f"Type into {description or self._description(locator)}"
 
         def action() -> None:
-            self.dismiss_system_dialogs()
-            if self._is_ios():
-                self._configure_ios_keyboard()
-            element = self._resolve(locator)
-            try:
-                element.click()
-            except WebDriverException:
-                pass
-            if clear_first:
-                element.clear()
-            element.send_keys(value)
-            self._verify_text_entry(locator, value, sensitive=sensitive)
+            with self._runtime_action("type_text"):
+                self.dismiss_system_dialogs()
+                if self._is_ios():
+                    self._configure_ios_keyboard()
+                element = self._resolve(locator)
+                try:
+                    element.click()
+                except WebDriverException:
+                    pass
+                if clear_first:
+                    element.clear()
+                element.send_keys(value)
+                self._verify_text_entry(locator, value, sensitive=sensitive)
 
         with step(action_name):
             self._run_mobile_action(action_name, action)
@@ -137,22 +147,23 @@ class BaseScreen:
         action_name = f"Type with keyboard into {description or self._description(locator)}"
 
         def action() -> None:
-            self.dismiss_system_dialogs()
-            element = self._resolve(locator)
-            if self._is_ios():
-                self._configure_ios_keyboard()
+            with self._runtime_action("type_text_with_keyboard"):
+                self.dismiss_system_dialogs()
+                element = self._resolve(locator)
+                if self._is_ios():
+                    self._configure_ios_keyboard()
+                    element.click()
+                    if clear_first:
+                        element.clear()
+                    self.driver.execute_script("mobile: keys", {"keys": list(value)})
+                    self._verify_text_entry(locator, value, sensitive=sensitive)
+                    return
+
                 element.click()
                 if clear_first:
                     element.clear()
-                self.driver.execute_script("mobile: keys", {"keys": list(value)})
+                element.send_keys(value)
                 self._verify_text_entry(locator, value, sensitive=sensitive)
-                return
-
-            element.click()
-            if clear_first:
-                element.clear()
-            element.send_keys(value)
-            self._verify_text_entry(locator, value, sensitive=sensitive)
 
         with step(action_name):
             self._run_mobile_action(action_name, action)
@@ -199,7 +210,13 @@ class BaseScreen:
     def dismiss_system_dialogs(self, timeout_seconds: float = 0.0) -> bool:
         return dismiss_android_system_dialogs(self.driver, LOGGER, timeout_seconds=timeout_seconds)
 
-    def _resolve(self, locator: MobileLocator | MobileLocatorGroup, timeout_ms: int | None = None):
+    def _resolve(
+        self,
+        locator: MobileLocator | MobileLocatorGroup,
+        timeout_ms: int | None = None,
+        action_name: str = ACTION_FIND,
+    ):
+        action_name = getattr(self, "_runtime_healing_action", action_name)
         raw_candidates = locator.candidates if isinstance(locator, MobileLocatorGroup) else (locator,)
         candidates = self._supported_locators(raw_candidates)
         enabled = bool(self.settings.get("self_healing", {}).get("enabled", False))
@@ -209,7 +226,15 @@ class BaseScreen:
             raise TimeoutException(f"No supported locators for platform: {self._description(locator)}")
 
         if not enabled:
-            return self._wait_for(candidates[0], timeout)
+            try:
+                return self._wait_for(candidates[0], timeout)
+            except TimeoutException as error:
+                return self._resolve_with_runtime_healing(
+                    candidates[0],
+                    action_name=action_name,
+                    timeout_ms=timeout,
+                    original_error=error,
+                )
 
         first_error: Exception | None = None
         for index, candidate in enumerate(candidates):
@@ -227,7 +252,55 @@ class BaseScreen:
                 if first_error is None:
                     first_error = error
                 continue
-        raise first_error or TimeoutException(f"Unable to resolve locator: {locator}")
+        return self._resolve_with_runtime_healing(
+            candidates[0],
+            action_name=action_name,
+            timeout_ms=timeout,
+            original_error=first_error or TimeoutException(f"Unable to resolve locator: {locator}"),
+        )
+
+    def _resolve_with_runtime_healing(
+        self,
+        original: MobileLocator,
+        *,
+        action_name: str,
+        timeout_ms: int,
+        original_error: Exception,
+    ):
+        if not runtime_healing_enabled(self.settings):
+            raise original_error
+
+        result, candidates = evaluate_mobile_healing(
+            driver=self.driver,
+            original=original,
+            settings=self.settings,
+            project_root=self.project_path(),
+            action=action_name,
+            metadata=self._healing_metadata(original),
+        )
+        LOGGER.warning(
+            "Runtime locator healing evaluated for '%s': decision=%s reason=%s candidates=%s",
+            original.description,
+            result.decision,
+            result.reason,
+            len(result.candidates),
+        )
+
+        selected = selected_mobile_candidate(result, candidates)
+        if selected is None:
+            raise TimeoutException(
+                f"Unable to resolve {original.description}. Runtime healing decision={result.decision}; "
+                f"reason={result.reason}. Original error: {original_error}"
+            ) from original_error
+
+        healed_locator = mobile_locator_from_candidate(selected, f"{original.description} runtime healed")
+        try:
+            return self._wait_for(healed_locator, min(timeout_ms, self._healing_timeout_ms()))
+        except TimeoutException as error:
+            raise TimeoutException(
+                f"Runtime healing selected {healed_locator.by}={healed_locator.value!r} for "
+                f"{original.description}, but the candidate was not visible."
+            ) from error
 
     def _wait_for(self, locator: MobileLocator, timeout_ms: int):
         wait = WebDriverWait(self.driver, timeout_ms / 1000)
@@ -258,6 +331,29 @@ class BaseScreen:
 
     def _healing_timeout_ms(self) -> int:
         return int(self.settings.get("self_healing", {}).get("timeout_ms", 1500))
+
+    def _healing_metadata(self, locator: MobileLocator) -> dict[str, str]:
+        context = ""
+        try:
+            context = str(getattr(self.driver, "current_context", "") or "")
+        except Exception:
+            context = ""
+        return {
+            "platform": str(self.driver.capabilities.get("platformName", "")),
+            "context": context or "NATIVE_APP",
+            "original_by": locator.by,
+            "original_value": locator.value,
+            "original_description": locator.description,
+        }
+
+    @contextmanager
+    def _runtime_action(self, action_name: str):
+        previous = getattr(self, "_runtime_healing_action", ACTION_FIND)
+        self._runtime_healing_action = action_name
+        try:
+            yield
+        finally:
+            self._runtime_healing_action = previous
 
     def _run_mobile_action(self, action_name: str, action: Callable[[], object]) -> object:
         attempts = self._action_retry_count()
