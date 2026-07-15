@@ -39,6 +39,8 @@ so the core report and optional official Allure report can be regenerated from t
 
 ![Core report overview](assets/walkthrough/core-report-overview.png)
 
+For the maintained screenshot inventory, see [SCREENSHOTS.md](SCREENSHOTS.md).
+
 Use these report kinds when needed:
 
 ```bash
