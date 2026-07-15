@@ -123,6 +123,9 @@ python framework.py report generate --no-open
 open reports/automation-report/index.html
 ```
 
+Core report generation also writes structured report data to
+`reports/automation-report/report-data.json`.
+
 Generate optional official Allure output only when you need it:
 
 ```bash
