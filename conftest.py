@@ -63,16 +63,20 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     profile = _profile_capabilities(profile_name)
     platform_name = str(profile.get("platformName", "")).lower()
     is_mobile_web_profile = bool(profile.get("browserName"))
+    is_hybrid_profile = _profile_is_hybrid(profile_name, profile)
     android_skip = pytest.mark.skip(reason=f"Selected profile '{profile_name}' is not Android.")
     ios_skip = pytest.mark.skip(reason=f"Selected profile '{profile_name}' is not iOS.")
     native_skip = pytest.mark.skip(reason=f"Selected profile '{profile_name}' is a mobile web profile.")
     mobile_web_skip = pytest.mark.skip(reason=f"Selected profile '{profile_name}' is a native app profile.")
+    hybrid_skip = pytest.mark.skip(reason=f"Selected profile '{profile_name}' is not a hybrid app profile.")
 
     for item in items:
         if "android" in item.keywords and platform_name != "android":
             item.add_marker(android_skip)
         if "ios" in item.keywords and platform_name != "ios":
             item.add_marker(ios_skip)
+        if "hybrid" in item.keywords and not is_hybrid_profile:
+            item.add_marker(hybrid_skip)
         if "native" in item.keywords and is_mobile_web_profile:
             item.add_marker(native_skip)
         if "mobile_web" in item.keywords and not is_mobile_web_profile:
@@ -184,6 +188,12 @@ def _profile_name(config: pytest.Config) -> str:
 
 def _profile_platform(profile_name: str) -> str:
     return str(_profile_capabilities(profile_name).get("platformName", ""))
+
+
+def _profile_is_hybrid(profile_name: str, profile: dict) -> bool:
+    app_name = str(profile.get("appium:app", "")).lower()
+    profile_key = profile_name.lower()
+    return "hybrid" in profile_key or "hybriddemo" in app_name
 
 
 def _profile_capabilities(profile_name: str) -> dict:
