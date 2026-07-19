@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from types import SimpleNamespace
 
 import pytest
@@ -36,6 +37,91 @@ def test_mobile_report_metadata_is_serializable_and_mobile_specific():
     assert metadata["run"]["browser"] == "Chrome"
     assert metadata["run"]["context"] == "mobile-web"
     assert "appium_driver" not in metadata["run"]
+
+
+def test_mobile_report_metadata_resolves_ios_simulator_udid(monkeypatch):
+    udid = "4991332A-C1A5-46C5-ACF7-63F6BCA0C78B"
+
+    def fake_run(*args, **kwargs):
+        assert args[0] == ["xcrun", "simctl", "list", "devices", "--json"]
+        return subprocess.CompletedProcess(
+            args=args[0],
+            returncode=0,
+            stdout=json.dumps(
+                {
+                    "devices": {
+                        "com.apple.CoreSimulator.SimRuntime.iOS-18-4": [
+                            {"name": "iPhone 16", "udid": udid, "state": "Booted"}
+                        ]
+                    }
+                }
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr(reporting.subprocess, "run", fake_run)
+
+    metadata = reporting.build_mobile_report_metadata(
+        env_name="qa",
+        profile_name="ios_mobile_web",
+        capabilities={
+            "platformName": "iOS",
+            "browserName": "Safari",
+            "appium:deviceName": "iPhone 15",
+            "appium:automationName": "XCUITest",
+            "appium:udid": udid,
+        },
+    )
+
+    json.dumps(metadata)
+
+    assert metadata["run"]["device_name"] == "iPhone 16"
+    assert metadata["run"]["udid"] == udid
+    assert metadata["test"]["capabilities"]["device_name"] == "iPhone 16"
+    assert metadata["test"]["capabilities"]["udid"] == udid
+
+
+def test_mobile_report_metadata_keeps_profile_device_name_without_udid():
+    metadata = reporting.build_mobile_report_metadata(
+        env_name="qa",
+        profile_name="ios_mobile_web",
+        capabilities={
+            "platformName": "iOS",
+            "browserName": "Safari",
+            "appium:deviceName": "iPhone 15",
+            "appium:automationName": "XCUITest",
+        },
+    )
+
+    json.dumps(metadata)
+
+    assert metadata["run"]["device_name"] == "iPhone 15"
+    assert "udid" not in metadata["run"]
+
+
+def test_mobile_report_metadata_does_not_report_stale_device_name_for_unresolved_udid(monkeypatch):
+    monkeypatch.setattr(
+        reporting.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args=args[0], returncode=0, stdout='{"devices": {}}'),
+    )
+
+    metadata = reporting.build_mobile_report_metadata(
+        env_name="qa",
+        profile_name="ios_mobile_web",
+        capabilities={
+            "platformName": "iOS",
+            "browserName": "Safari",
+            "appium:deviceName": "iPhone 15",
+            "appium:automationName": "XCUITest",
+            "appium:udid": "UNKNOWN-UDID",
+        },
+    )
+
+    json.dumps(metadata)
+
+    assert "device_name" not in metadata["run"]
+    assert metadata["run"]["udid"] == "UNKNOWN-UDID"
 
 
 def test_finalize_mobile_report_uses_core_finalizer_and_enriches_tests(monkeypatch, tmp_path):
