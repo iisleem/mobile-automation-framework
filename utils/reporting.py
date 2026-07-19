@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 import json
 from pathlib import Path
+import subprocess
 from typing import Any
 
 from automation_core.healing import add_healing_result
@@ -75,14 +76,18 @@ def build_mobile_report_metadata(
 ) -> dict[str, dict[str, Any]]:
     capabilities = capabilities or {}
     context = _mobile_context(profile_name, capabilities)
+    platform = _string_value(capabilities.get("platformName"))
+    udid = _string_value(capabilities.get("appium:udid"))
+    device_name = _actual_device_name(platform=platform, udid=udid, capabilities=capabilities)
     test_metadata = _without_empty(
         {
             "domain": "mobile",
             "environment": env_name,
             "profile": profile_name,
-            "platform": _string_value(capabilities.get("platformName")),
+            "platform": platform,
             "platform_version": _string_value(capabilities.get("appium:platformVersion")),
-            "device_name": _string_value(capabilities.get("appium:deviceName")),
+            "device_name": device_name,
+            "udid": udid,
             "appium_driver": _string_only(capabilities.get("appium:automationName")),
             "browser": _string_value(capabilities.get("browserName")),
             "context": context,
@@ -96,6 +101,7 @@ def build_mobile_report_metadata(
             "platform",
             "platform_version",
             "device_name",
+            "udid",
             "appium_driver",
             "browser",
             "context",
@@ -177,6 +183,41 @@ def _healing_report_enricher(audit_path: Path) -> Callable[[Any], Any]:
         return report
 
     return enrich
+
+
+def _actual_device_name(*, platform: str, udid: str, capabilities: Mapping[str, Any]) -> str:
+    configured_name = _string_value(capabilities.get("appium:deviceName"))
+    if not udid:
+        return configured_name
+    if platform.lower() == "ios":
+        return _ios_simulator_name_for_udid(udid)
+    if configured_name and configured_name == udid:
+        return configured_name
+    return ""
+
+
+def _ios_simulator_name_for_udid(udid: str) -> str:
+    try:
+        completed = subprocess.run(
+            ["xcrun", "simctl", "list", "devices", "--json"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        devices = json.loads(completed.stdout).get("devices", {})
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+        return ""
+
+    for device_list in devices.values():
+        if not isinstance(device_list, list):
+            continue
+        for device in device_list:
+            if not isinstance(device, dict):
+                continue
+            if str(device.get("udid", "")) == udid:
+                return _string_value(device.get("name"))
+    return ""
 
 
 def _attach_healing_event(report: Any, event: dict[str, Any]) -> bool:
