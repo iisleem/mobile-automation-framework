@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import _profile_is_hybrid
 from utils.capabilities import available_profiles, resolve_capabilities
 from utils.config_reader import ConfigReader
 
@@ -46,3 +47,9 @@ def test_mobile_web_profiles_use_appium_browser_capabilities():
     assert ios["platformName"] == "iOS"
     assert ios["browserName"] == "Safari"
     assert "appium:app" not in ios
+
+
+def test_hybrid_profile_detection_uses_profile_name_or_app_name():
+    assert _profile_is_hybrid("android_hybrid_demo", {"appium:app": "apps/Other.apk"}) is True
+    assert _profile_is_hybrid("android_the_app", {"appium:app": "apps/HybridDemo.apk"}) is True
+    assert _profile_is_hybrid("android_the_app", {"appium:app": "apps/TheApp.apk"}) is False
