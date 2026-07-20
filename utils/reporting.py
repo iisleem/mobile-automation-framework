@@ -19,7 +19,7 @@ DEFAULT_HISTORY_DIR = Path("reports") / "history"
 DEFAULT_HEALING_AUDIT_PATH = Path("reports") / "healing" / "events.jsonl"
 PROJECT_NAME = "mobile-automation-framework"
 FRAMEWORK_NAME = "pytest-appium"
-MOBILE_MATRIX_DIMENSIONS = ["environment", "profile", "platform", "platform_version", "device_name", "context"]
+MOBILE_MATRIX_DIMENSIONS = ["profile", "platform", "platform_version", "device_name", "context", "component", "owner"]
 
 
 def finalize_mobile_report(
@@ -81,6 +81,7 @@ def build_mobile_report_metadata(
     device_name = _actual_device_name(platform=platform, udid=udid, capabilities=capabilities)
     test_metadata = _without_empty(
         {
+            "platform_type": "mobile",
             "domain": "mobile",
             "environment": env_name,
             "profile": profile_name,
